@@ -116,5 +116,18 @@
     "masterUsername": "tecno",
     "masterArea": "tecnologia",
     "createdAt": "2025-10-06T18:47:53.695Z"
+  },
+  {
+    "id": 10,
+    "titulo": "calculadora",
+    "descricao": "faça uma calculadora em javascript",
+    "xp": 10,
+    "turma": null,
+    "targetClass": "geral",
+    "status": "ativa",
+    "masterId": 1,
+    "masterUsername": "tecno",
+    "masterArea": "tecnologia",
+    "createdAt": "2025-10-06T20:12:20.708Z"
   }
 ]

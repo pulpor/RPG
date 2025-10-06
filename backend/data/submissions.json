@@ -99,5 +99,19 @@
     "missionTitle": "ei ei ei",
     "xp": 5,
     "completed": false
+  },
+  {
+    "id": 8,
+    "userId": 14,
+    "missionId": 10,
+    "filePaths": [
+      "C:\\Users\\LEONARDOFELIPEDEGOES\\Desktop\\projetoIntegrador2ano2025\\uploads\\conta2_calculadora_1759781560097.js"
+    ],
+    "submittedAt": "2025-10-06T20:12:40.104Z",
+    "pending": true,
+    "status": "pending",
+    "missionTitle": "calculadora",
+    "xp": 10,
+    "completed": false
   }
 ]

@@ -14,9 +14,12 @@ const { autenticar } = require('../middleware/auth');
 
 // Endpoint para análise de código com Gemini AI
 router.post('/analyze', autenticar, async (req, res) => {
+    console.log('\n==========================================');
     console.log('🤖 [GEMINI] Rota /analyze foi CHAMADA!');
     console.log('🤖 [GEMINI] User:', req.user?.username);
     console.log('🤖 [GEMINI] Body keys:', Object.keys(req.body));
+    console.log('🤖 [GEMINI] Files recebidos:', req.body?.files?.length || 0);
+    console.log('==========================================')
 
     try {
         const { files, missionContext } = req.body;
@@ -31,10 +34,11 @@ router.post('/analyze', autenticar, async (req, res) => {
 
         // Verificar se a API key está configurada
         const geminiApiKey = process.env.GEMINI_API_KEY;
-        console.log('🔍 Verificando API Key do Gemini...');
-        console.log('   - API Key presente:', geminiApiKey ? 'SIM' : 'NÃO');
+        console.log('\n🔍 Verificando API Key do Gemini...');
+        console.log('   - API Key presente:', geminiApiKey ? '✅ SIM' : '❌ NÃO');
         console.log('   - Tamanho da chave:', geminiApiKey ? geminiApiKey.length : 0);
-        console.log('   - Primeiros 10 caracteres:', geminiApiKey ? geminiApiKey.substring(0, 10) + '...' : 'N/A');
+        console.log('   - Primeiros 15 caracteres:', geminiApiKey ? geminiApiKey.substring(0, 15) + '...' : 'N/A');
+        console.log('   - Últimos 10 caracteres:', geminiApiKey ? '...' + geminiApiKey.substring(geminiApiKey.length - 10) : 'N/A');
 
         if (!geminiApiKey || geminiApiKey.trim() === '') {
             console.log('⚠️ AVISO: API Key do Gemini não configurada. Usando feedback de demonstração.');
@@ -53,16 +57,25 @@ router.post('/analyze', autenticar, async (req, res) => {
         const prompt = buildAnalysisPrompt(files, missionContext);
 
         // Tentar múltiplos modelos compatíveis com a API v1, na ordem de preferência
+        // Modelos mais recentes primeiro (Gemini 2.x), depois fallback para 1.5
         const modelCandidates = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro'
+            'gemini-2.5-flash',      // Mais rápido e eficiente (2025)
+            'gemini-2.0-flash',      // Alternativa rápida
+            'gemini-2.5-pro',        // Mais avançado
+            'gemini-1.5-flash',      // Fallback para contas antigas
+            'gemini-1.5-pro',        // Fallback para contas antigas
+            'gemini-pro'             // Fallback final
         ];
 
         let lastErrText = '';
         let tried404 = false;
+        console.log('\n📋 Tentando modelos:', modelCandidates.join(', '));
+
         for (const model of modelCandidates) {
             const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiApiKey}`;
-            console.log(`🚀 Tentando modelo: ${model}`);
+            console.log(`\n🚀 [TENTATIVA] Modelo: ${model}`);
+            console.log(`   URL: ${url.replace(geminiApiKey, 'API_KEY_OCULTA')}`);
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -79,14 +92,17 @@ router.post('/analyze', autenticar, async (req, res) => {
                 })
             });
 
-            console.log('📡 Resposta do Gemini:', response.status, response.statusText, `(${model})`);
+            console.log(`📡 [RESPOSTA] Status: ${response.status} ${response.statusText}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
                 lastErrText = errorText;
-                console.error(`❌ ${model} falhou:`, errorText);
+                console.error(`\n❌ [ERRO] Modelo ${model} falhou:`);
+                console.error(`   Status: ${response.status}`);
+                console.error(`   Resposta: ${safeTruncate(errorText, 500)}`);
                 // Se for 404 (modelo não encontrado/não habilitado), tenta o próximo
                 if (response.status === 404) {
+                    console.warn(`   ⚠️ Modelo ${model} não disponível (404), tentando próximo...`);
                     tried404 = true;
                     continue;
                 }
@@ -109,12 +125,17 @@ router.post('/analyze', autenticar, async (req, res) => {
             }
 
             const feedback = extractFeedbackText(data);
-            console.log(`📝 Texto extraído (${model}):`, feedback ? `${feedback.length} chars` : 'vazio');
+            console.log(`\n📝 [SUCESSO] Texto extraído do modelo ${model}:`);
+            console.log(`   Tamanho: ${feedback ? feedback.length : 0} caracteres`);
+            console.log(`   Preview: ${feedback ? feedback.substring(0, 100) + '...' : 'vazio'}`);
+
             if (!feedback) {
                 console.error(`❌ Conteúdo vazio em ${model}:`, JSON.stringify(data).slice(0, 500));
                 continue;
             }
 
+            console.log('✅ [GEMINI] Análise concluída com sucesso!');
+            console.log('==========================================\n');
             return res.json({
                 success: true,
                 model,
