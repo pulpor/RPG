@@ -1,0 +1,33 @@
+{
+  "name": "projeto-integrador-rpg",
+  "version": "1.0.0",
+  "description": "Sistema RPG de Aprendizado",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev-full": "concurrently \"npm run dev\" \"npm run frontend\"",
+    "test": "jest"
+  },
+  "dependencies": {
+    "all": "^0.0.0",
+    "autoprefixer": "^10.4.21",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "node-fetch": "^2.7.0",
+    "toastify-js": "^1.12.0",
+    "undici": "^7.13.0",
+    "vite": "^7.1.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "nodemon": "^3.1.10"
+  }
+}

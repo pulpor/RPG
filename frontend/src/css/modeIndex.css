@@ -1,0 +1,308 @@
+/* ===================== TEMA DARK/LIGHT ===================== */
+[data-theme="dark"] {
+  --animated-bg: linear-gradient(-45deg, #1f2937, #374151, #4b5563, #6b7280);
+}
+
+[data-theme="dark"] body {
+  background: var(--animated-bg, linear-gradient(-45deg, #1f2937, #374151, #4b5563, #6b7280));
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+[data-theme="dark"] .login-card {
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+[data-theme="dark"] .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] #login-screen .input-field,
+[data-theme="dark"] .input-group .input-field {
+  background: rgba(55, 65, 81, 0.8) !important;
+  color: white !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+  height: 52px !important;
+  line-height: 20px !important;
+  padding: 16px 16px 16px 52px !important;
+}
+
+[data-theme="dark"] #login-screen .input-field:focus,
+[data-theme="dark"] .input-group .input-field:focus {
+  background: rgba(75, 85, 99, 0.9) !important;
+  border-color: #818cf8 !important;
+  transform: none !important;
+  outline: none !important;
+  box-shadow: 0 10px 25px rgba(129, 140, 248, 0.2) !important;
+  height: 52px !important;
+  line-height: 20px !important;
+  padding: 16px 16px 16px 52px !important;
+}
+
+[data-theme="dark"] #login-screen .input-field::placeholder,
+[data-theme="dark"] .input-group .input-field::placeholder {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] #login-screen .input-icon,
+[data-theme="dark"] .input-group .input-icon,
+[data-theme="dark"] .input-field + .input-icon {
+  color: #9ca3af !important;
+  position: absolute !important;
+  left: 18px !important;
+  top: 26px !important;
+  transform: translateY(-50%) !important;
+  z-index: 1000 !important;
+}
+
+[data-theme="dark"] #login-screen .input-field:focus + .input-icon,
+[data-theme="dark"] .input-group .input-field:focus + .input-icon {
+  color: #818cf8 !important;
+  position: absolute !important;
+  left: 18px !important;
+  top: 26px !important;
+  transform: translateY(-50%) !important;
+  z-index: 1000 !important;
+}
+
+
+[data-theme="dark"] #password-strength-text {
+  color: #d5d5d5;
+}
+
+[data-theme="dark"] #password-feedback {
+  color: #faebeb !important; /* vermelho claro */
+}
+
+/* Estados específicos para ícones */
+.theme-icon-sun {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+}
+
+.theme-icon-moon {
+  color: #e2e8f0;
+  filter: drop-shadow(0 0 8px rgba(226, 232, 240, 0.6));
+}
+
+.theme-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border-radius: 10px;
+  z-index: 1;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle:hover::before {
+  opacity: 0.7;
+  animation-duration: 3s;
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Ícones do tema - tamanho reduzido */
+#theme-icon {
+  font-size: 18px;
+  z-index: 3;
+  position: relative;
+  display: inline-block;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle:hover #theme-icon {
+  transform: rotate(180deg) scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+/* efeitos do dark light mode */
+.theme-toggle::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    #667eea,
+    #764ba2,
+    #f093fb,
+    #f5576c,
+    #667eea
+  );
+  opacity: 0;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  animation: rotate 6s linear infinite;
+}
+
+
+[data-theme="dark"] .btn-secondary {
+  background: #374151; /* cinza escuro */
+  color: #e5e7eb;      /* cinza claro */
+  border-color: #4b5563;
+  cursor: pointer;
+  opacity: 1;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #4b5563; /* tom mais claro no hover */
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(148, 163, 184, 0.15);
+}
+
+[data-theme="dark"] .theme-toggle::before {
+  background: conic-gradient(
+    from 0deg,
+    #fbbf24,
+    #f59e0b,
+    #f97316,
+    #ef4444,
+    #fbbf24
+  );
+}
+
+[data-theme="dark"] .theme-toggle::after {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+}
+
+
+#theme-icon {
+  font-size: 18px;
+  z-index: 3;
+  position: relative;
+  display: inline-block;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s cubic-bezier(0.4, 0.2, 0.2, 1), filter 0.3s, text-shadow 0.3s;
+}
+
+[data-theme="dark"] .theme-toggle:hover #theme-icon {
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+}
+
+[data-theme="dark"] h2.text-xl.font-bold.text-gray-700 {
+  color: #fff !important;
+}
+
+[data-theme="dark"] div.text-xs.p-2.rounded.bg-white.border.mt-2 {
+  background: #1f2937 !important; /* bg-gray-800 */
+}
+
+/* Transições suaves para tema */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ===================== TOOLTIP/BALÃOZINHO ===================== */
+.theme-toggle .lumus-nox-tooltip {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #111;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1001;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.nox {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  display: block; /* sempre presente, mas invisível até o hover */
+  position: absolute;
+  top: 70px;
+  left: 380px;
+  width: 50px;
+  height: 50px;
+  background-image: url('../../assets/nox.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 10001;
+}
+
+[data-theme="dark"] .nox {
+  background-image: url('../../assets/lumus.png');
+}
+
+.theme-toggle:hover + .nox {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* === BOTÃO DE TEMA DENTRO DO CARD === */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  backdrop-filter: blur(20px);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+
+/* ===================== RESPONSIVIDADE ===================== */
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    top: 16px;
+    right: 16px;
+  }
+  #theme-icon {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+    top: 12px;
+    right: 12px;
+  }
+  #theme-icon {
+    font-size: 14px !important;
+  }
+}

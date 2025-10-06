@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (dados do usuário)
+uploads/
+*/uploads/
+backend/uploads/
+frontend/uploads/
+
+# Backup files
+backup/
+*-backup.*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files (manter apenas em desenvolvimento)
+tests/
+**/test-*
+**/debug-*
+*.temp
+
+# Cache
+.cache/
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Test results
+test-results/
+*.test.js
+*.spec.js
+
+# Debug files
+debug-*.js
+test-*.html
+debug-*.html
+
+# Legacy paths (old structure)
+web/Uploads/
+web/jsons/
+web/js/
+web/html/
+web/styles/

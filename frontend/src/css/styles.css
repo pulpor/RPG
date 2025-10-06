@@ -1,0 +1,1027 @@
+/* Feedback de senha mais claro no modo dark */
+[data-theme="dark"] #password-feedback {
+  color: #fca5a5 !important; /* vermelho claro */
+}
+
+/* Margem entre barra de progresso e feedback */
+#password-strength {
+  margin-bottom: 0.75rem; /* mb-3 */
+}
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* === VARIÁVEIS PARA ESPAÇAMENTO === */
+:root {
+  --navbar-height: 64px;
+  --tabs-height: 70px;
+  --filter-height: 120px;
+  /* Altura mais precisa para os filtros */
+  --total-fixed-height: calc(
+    var(--navbar-height) + var(--tabs-height) + var(--filter-height)
+  );
+}
+
+/* === LAYOUT PRINCIPAL === */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* === NAVBAR FIXO === */
+.navbar-fixed .page-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: var(--navbar-height);
+}
+
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--navbar-height);
+  min-height: calc(100vh - var(--navbar-height));
+  overflow-x: hidden;
+}
+
+/* === NAVBAR STYLES === */
+nav.page-header,
+nav.bg-purple-600,
+nav.bg-blue-600 {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 50 !important;
+  width: 100% !important;
+  min-height: var(--navbar-height) !important;
+  padding: 1rem !important;
+}
+
+/* Light mode navbar */
+[data-theme="light"] nav.page-header,
+[data-theme="light"] nav.bg-purple-600,
+nav.page-header,
+nav.bg-purple-600 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Student navbar (blue) */
+[data-theme="light"] nav.bg-blue-600,
+nav.bg-blue-600 {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Dark mode navbar */
+[data-theme="dark"] nav.page-header,
+[data-theme="dark"] nav.bg-purple-600 {
+  background: linear-gradient(
+    135deg,
+    #4c1d95 0%,
+    #5b21b6 50%,
+    #6d28d9 100%
+  ) !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
+}
+
+[data-theme="dark"] nav.bg-blue-600 {
+  background: linear-gradient(
+    135deg,
+    #1e40af 0%,
+    #2563eb 50%,
+    #3b82f6 100%
+  ) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Navbar content */
+nav.page-header *,
+nav.bg-purple-600 *,
+nav.bg-blue-600 * {
+  color: white !important;
+  display: inherit !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+nav.page-header .container,
+nav.bg-purple-600 .container,
+nav.bg-blue-600 .container {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+/* Logout button */
+nav #logout-btn,
+nav button {
+  background-color: #dc2626 !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+nav #logout-btn:hover,
+nav button:hover {
+  background-color: #b91c1c !important;
+}
+
+/* === TABS === */
+.tab-header {
+  position: fixed !important;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 2rem;
+  height: var(--tabs-height);
+  display: flex !important;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .tab-header {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: #334155;
+}
+
+.tabs-wrapper {
+  flex: 1;
+  margin-top: var(--tabs-height);
+  min-height: calc(100% - var(--tabs-height));
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-content {
+  flex: 1;
+  min-height: 600px;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0 1rem 0;
+  display: none;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+/* Container centralizado para conteúdo das abas */
+.tab-content > .container,
+.tab-content > div:first-child {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Garantir que grids e listas também respeitem a largura */
+.tab-content #students-list,
+.tab-content #submissions-list,
+.tab-content #missions-list,
+.tab-content #pending-users {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Garantir que conteúdo dentro do panel-wrapper também respeite */
+.panel-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.contend {
+  width: 100%;
+}
+
+.tab-button {
+  position: relative;
+  padding: 12px 24px;
+  border-radius: 8px 8px 0 0;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-right: 4px;
+  color: #6b7280;
+}
+
+.tab-button:not(.active):hover {
+  background: rgba(248, 250, 252, 0.8) !important;
+  color: #374151 !important;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .tab-button:not(.active) {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .tab-button:not(.active):hover {
+  background: rgba(51, 65, 85, 0.5);
+  color: #e2e8f0;
+}
+
+/* === FILTROS - POSICIONAMENTO FIXO ABAIXO DAS TABS === */
+.filter-section {
+  position: fixed;
+  top: calc(var(--navbar-height) + var(--tabs-height));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+  display: none;
+  transition: all 0.3s ease;
+  z-index: 25;
+  backdrop-filter: blur(10px);
+}
+
+.filter-section.active,
+.filter-section.show-filters {
+  display: block !important;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="dark"] .filter-section {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: #334155;
+}
+
+/* Ajuste do conteúdo quando filtros estão ativos */
+.tab-content.has-active-filters,
+.filter-section.active ~ .page-content .tab-content,
+.filter-section[style*="display: block"] ~ .page-content .tab-content,
+.filter-section.show-filters ~ .page-content .tab-content {
+  padding-top: calc(var(--filter-height) + 1rem);
+}
+
+/* Remover regras antigas desnecessárias */
+.filter-section.active ~ .tab-content,
+.filter-section[style*="display: block"] ~ .tab-content,
+.filter-section.show-filters ~ .tab-content {
+  /* Regras removidas - agora usando posicionamento fixo */
+}
+
+/* Remover regras :has() desnecessárias */
+.tabs-wrapper:has(.filter-section.active) .tab-content,
+.tabs-wrapper:has(.filter-section[style*="display: block"]) .tab-content,
+.tabs-wrapper:has(.filter-section.show-filters) .tab-content {
+  /* Regras removidas - agora usando posicionamento fixo */
+}
+
+/* Fallback removido */
+.filters-active .tab-content {
+  /* Regras removidas - agora usando posicionamento fixo */
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-input {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filter-input:focus {
+  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.filter-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.filter-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+[data-theme="dark"] .filter-input {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .filter-input:focus {
+  background: #374151;
+  border-color: #3b82f6;
+}
+
+.filter-section label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .filter-section label {
+  color: #e5e7eb;
+}
+
+/* === CARDS === */
+.panel-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow-x: hidden;
+  padding: 0 32px 1rem 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  min-height: 200px;
+  padding-bottom: 3rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.card:hover::before {
+  transform: translateX(0);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #e2e8f0;
+}
+
+[data-theme="dark"] .card {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-color: #6b7280;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: #9ca3af;
+}
+
+/* === TIPOGRAFIA === */
+.tab-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.tab-content h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .tab-content h2 {
+  color: #f9fafb;
+}
+
+.card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+[data-theme="dark"] .card h3 {
+  color: #f9fafb;
+}
+
+.card p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+[data-theme="dark"] .card p {
+  color: #d1d5db;
+}
+
+.card .text-sm {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+/* === THEME TOGGLE === */
+/* Apenas para theme toggle standalone (não no header) */
+.theme-toggle:not(.page-header .theme-toggle):not(#themeToggle) {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle:not(.page-header .theme-toggle):not(#themeToggle):hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* === DARK MODE === */
+[data-theme="dark"] body {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+[data-theme="dark"] .bg-gray-200 {
+  background-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+[data-theme="dark"] .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .text-gray-800 {
+  color: #f9fafb !important;
+}
+
+[data-theme="dark"] .text-gray-900 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .border-gray-300 {
+  border-color: #6b7280 !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  outline: none;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* === SCROLLBAR === */
+.tab-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+  border-radius: 4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+}
+
+[data-theme="dark"] .tab-content::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+[data-theme="dark"] .tab-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6b7280, #9ca3af);
+}
+
+[data-theme="dark"] .tab-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9ca3b8, #d1d5db);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  :root {
+    --filter-height: 160px;
+    /* Altura maior em mobile devido ao layout empilhado */
+  }
+
+  .filter-section {
+    width: 95%;
+    padding: 0.75rem 1rem;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .panel-wrapper {
+    padding: 0 20px 2rem 20px;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    top: 130px;
+    right: 10px;
+  }
+
+  .navbar-fixed .page-content {
+    padding-top: 60px;
+  }
+
+  /* Ajuste específico para mobile quando filtros estão ativos */
+  .tab-content.has-active-filters {
+    padding-top: calc(var(--filter-height) + 0.5rem);
+  }
+
+  .filter-section.active ~ .page-content .tab-content,
+  .filter-section[style*="display: block"] ~ .page-content .tab-content,
+  .filter-section.show-filters ~ .page-content .tab-content {
+    padding-top: calc(var(--filter-height) + 0.5rem);
+  }
+}
+
+/* === PAINEL DO ALUNO - ESTILOS ESPECÍFICOS === */
+
+/* Progress section - seção de progresso do aluno */
+.progress-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.progress-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .progress-section {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-color: #6b7280;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Student info cards */
+.student-info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.student-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .student-info-card {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+/* XP e Level styling */
+.xp-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  text-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .xp-display {
+  color: #60a5fa;
+}
+
+.level-display {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #8b5cf6;
+}
+
+[data-theme="dark"] .level-display {
+  color: #a78bfa;
+}
+
+/* === BOTÕES DE AÇÃO DOS ALUNOS === */
+/* Garantir que os hovers funcionem corretamente com especificidade alta */
+.cards-grid .penalty-btn,
+div[id*="students"] .penalty-btn {
+  background-color: #f97316 !important;
+  transition: all 0.2s ease !important;
+  color: white !important;
+}
+
+.cards-grid .penalty-btn:hover,
+div[id*="students"] .penalty-btn:hover {
+  background-color: #ea580c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3) !important;
+}
+
+.cards-grid .reward-btn,
+div[id*="students"] .reward-btn {
+  background-color: #10b981 !important;
+  transition: all 0.2s ease !important;
+  color: white !important;
+}
+
+.cards-grid .reward-btn:hover,
+div[id*="students"] .reward-btn:hover {
+  background-color: #059669 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.cards-grid .history-btn,
+div[id*="students"] .history-btn {
+  background-color: #3b82f6 !important;
+  transition: all 0.2s ease !important;
+  color: white !important;
+}
+
+.cards-grid .history-btn:hover,
+div[id*="students"] .history-btn:hover {
+  background-color: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+.cards-grid .expel-btn,
+div[id*="students"] .expel-btn {
+  background-color: #ef4444 !important;
+  transition: all 0.2s ease !important;
+  color: white !important;
+}
+
+.cards-grid .expel-btn:hover,
+div[id*="students"] .expel-btn:hover {
+  background-color: #dc2626 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Melhorar estilo geral dos botões dos cards com alta especificidade */
+.cards-grid .penalty-btn,
+.cards-grid .reward-btn,
+.cards-grid .history-btn,
+.cards-grid .expel-btn,
+div[id*="students"] .penalty-btn,
+div[id*="students"] .reward-btn,
+div[id*="students"] .history-btn,
+div[id*="students"] .expel-btn {
+  border: none !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Remover qualquer conflito com classes do Tailwind */
+.cards-grid .penalty-btn *,
+.cards-grid .reward-btn *,
+.cards-grid .history-btn *,
+.cards-grid .expel-btn *,
+div[id*="students"] .penalty-btn *,
+div[id*="students"] .reward-btn *,
+div[id*="students"] .history-btn *,
+div[id*="students"] .expel-btn * {
+  pointer-events: none;
+}
+
+/* === CONTROLE SIMPLIFICADO DE FILTROS === */
+/* Filtros agora são inline - sem necessidade de padding dinâmico */
+.page-content.filters-visible .tab-content {
+  /* Não precisa mais de padding especial */
+}
+
+/* Estado padrão mantido */
+.page-content:not(.filters-visible) .tab-content {
+  padding-top: 1rem;
+  transition: padding-top 0.3s ease;
+}
+
+/* Indicador visual de que há filtros ativos - melhorado */
+.filter-section.active::after,
+.filter-section.show-filters::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  animation: filterIndicatorPulse 2s ease-in-out infinite;
+}
+
+/* Animação sutil para o indicador */
+@keyframes filterIndicatorPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+@keyframes filterSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === INTEGRAÇÃO VISUAL FILTRO-TAB === */
+.filter-section::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 2rem;
+  right: 2rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #e5e7eb 20%,
+    #e5e7eb 80%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+
+.filter-section.active::before,
+.filter-section[style*="display: block"]::before,
+.filter-section.show-filters::before {
+  display: none;
+}
+
+/* Transição mais suave para o conteúdo abaixo do filtro */
+.filter-section + .tab-content,
+.filter-section ~ .tab-content {
+  transition: margin-top 0.3s ease;
+}
+
+/* Melhor espaçamento quando filtro está ativo */
+.tabs-wrapper:has(.filter-section.active) .tab-content:not(.filter-section),
+.tabs-wrapper:has(.filter-section[style*="display: block"])
+  .tab-content:not(.filter-section),
+.tabs-wrapper:has(.filter-section.show-filters)
+  .tab-content:not(.filter-section) {
+  margin-top: 0;
+}
+
+/* === FORÇA Z-INDEX DOS FILTROS === */
+/* Regra mais específica para garantir que filtros visíveis apareçam */
+body .filter-section[style*="display: block"],
+body .filter-section.active,
+body .filter-section.show-filters {
+  z-index: 999 !important;
+  position: relative !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Reduzir espaçamento geral */
+.tab-content > * {
+  margin-top: 0;
+}
+
+.tab-content > *:first-child {
+  margin-top: 0;
+}
+
+/* === FILTROS ESPECÍFICOS FORA DE TAB-CONTENT === */
+/* Para filtros que estão diretamente em tabs-wrapper mas não em tab-content */
+.tabs-wrapper > .filter-section {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  z-index: 1;
+  position: relative;
+}
+
+.tabs-wrapper > .filter-section.active,
+.tabs-wrapper > .filter-section[style*="display: block"],
+.tabs-wrapper > .filter-section.show-filters {
+  display: block !important;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Garantir que filtros não apareçam por trás de nada */
+.filter-section[style*="display: block"] {
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Espaçamento específico após filtros visíveis */
+.filter-section.active + .tab-content,
+.filter-section[style*="display: block"] + .tab-content,
+.filter-section.show-filters + .tab-content {
+  margin-top: 0.5rem;
+}
+
+/* === CORREÇÃO ESPECÍFICA DE Z-INDEX PARA FILTROS === */
+/* Garantir que filtros ativos apareçam corretamente */
+.filter-section.active,
+.filter-section[style*="display: block"],
+.filter-section.show-filters,
+.filter-section:not([style*="display: none"]):not([style=""]) {
+  z-index: 1 !important;
+  position: relative !important;
+  display: block !important;
+}
+
+/* Evitar que elementos posteriores sobreponham os filtros */
+.filter-section.active ~ *,
+.filter-section[style*="display: block"] ~ *,
+.filter-section.show-filters ~ * {
+  position: relative;
+  z-index: 0;
+}
+
+/* Títulos h2 com espaçamento adequado quando há filtros */
+.tab-content h2:first-child {
+  margin-top: 0;
+}
+
+/* Corrigir problema de espaçamento específico */
+.tab-content:first-child {
+  padding-top: 0.5rem;
+}

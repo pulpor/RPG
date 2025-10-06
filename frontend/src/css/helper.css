@@ -1,0 +1,47 @@
+/* Estilos auxiliares para o sistema RPG */
+.progresso {
+    margin-top: 20px;
+    /* Aumentado para dar mais espaço ao header */
+    transition: margin-top 0.3s ease;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    .progresso {
+        margin-top: 140px;
+        /* Ainda mais espaço em mobile */
+    }
+}
+
+/* Animação suave para mudanças de tema */
+* {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Melhorias no botão de tema */
+.theme-button {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1001;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.theme-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+#turma-modal-backdrop{
+    border-radius: 1rem;
+}
+

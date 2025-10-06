@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Criar Nova Conta - RPG Educacional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./src/css/index.css" />
+    <link rel="stylesheet" href="./src/css/modeIndex.css" />
+     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="shortcut icon" href="assets/favicon.ico" />
+  </head>
+  <body class="animated-bg font-sans h-screen overflow-hidden">
+    <script>
+      // Aplica o tema salvo ao carregar a página
+      document.documentElement.setAttribute(
+        "data-theme",
+        localStorage.getItem("theme") || "light"
+      );
+    </script>
+
+   <script type="module" defer src="./src/js/cadastro.js"></script>
+   
+    <div class="h-full flex items-center justify-center p-4">
+      <div
+        id="login-screen"
+        class="login-card max-w-md w-full rounded-2xl max-h-full overflow-visible"
+      >
+        <!-- Botão de alternar tema -->
+        <button
+          id="themeToggle"
+          class="theme-toggle"
+          onclick="toggleTheme()"
+          aria-label="Alternar tema"
+        >
+          <i id="theme-icon" class="fas fa-moon theme-icon-moon"></i>
+          <div class="lumus-nox-tooltip">Lumus</div>
+        </button>
+        <div class="nox"></div>
+
+        <!-- Logo -->
+        <div class="logo-title">
+          <i class="fas fa-dice-d20 logo-icon"></i>
+          <h1 class="text-3xl font-bold">
+            Sistema RPG<br /><span class="text-2x1">Educacional</span>
+          </h1>
+        </div>
+
+        <!-- Formulário de cadastro -->
+        <div id="register-form">
+          <div class="text-center mb-6">
+            <h2 class="text-xl font-bold text-gray-700 mb-2">
+              <i class="fas fa-user-plus text-purple-600 mr-2"></i>
+              Criar Nova Conta
+            </h2>
+            <p class="text-sm text-gray-500">
+              Junte-se à aventura do aprendizado!
+            </p>
+          </div>
+
+          <!-- Nome de usuário -->
+          <div class="input-group">
+            <input
+              id="reg-username"
+              type="text"
+              placeholder="Nome de usuário"
+              class="input-field"
+            />
+            <i class="fas fa-user input-icon"></i>
+            <div id="username-feedback" class="text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Nome completo -->
+          <div class="input-group">
+            <input
+              id="reg-fullname"
+              type="text"
+              placeholder="Nome completo"
+              class="input-field"
+            />
+            <i class="fas fa-id-card input-icon"></i>
+            <div id="fullname-feedback" class="text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Senha -->
+          <div class="input-group">
+            <input
+              id="reg-password"
+              type="password"
+              placeholder="Senha"
+              class="input-field"
+            />
+            <i class="fas fa-lock input-icon"></i>
+            <div id="password-feedback" class="text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Força da senha -->
+          <div id="password-strength" class="mt-2 hidden">
+            <div class="flex gap-1 mb-1">
+              <div class="password-bar flex-1 h-1 bg-gray-200 rounded"></div>
+              <div class="password-bar flex-1 h-1 bg-gray-200 rounded"></div>
+              <div class="password-bar flex-1 h-1 bg-gray-200 rounded"></div>
+              <div class="password-bar flex-1 h-1 bg-gray-200 rounded"></div>
+            </div>
+            <div id="password-strength-text" class="text-xs text-gray-600"></div>
+          </div>
+
+          <!-- Seleção de curso -->
+          <div class="input-group">
+            <select id="curso-select" class="input-field">
+              <option value="">Escolha seu curso</option>
+              <option value="beleza">👒 Beleza</option>
+              <option value="gastronomia">👨‍🍳 Gastronomia</option>
+              <option value="gestao">👩‍🎓 Gestão</option>
+              <option value="idiomas">🌐 Idiomas</option>
+              <option value="oftalmo">👁️ Oftalmologia</option>
+              <option value="tecnologia">🖥️ Tecnologia</option>
+            </select>
+            <i class="fas fa-graduation-cap input-icon"></i>
+          </div>
+
+          <!-- Seleção de turma -->
+          <div class="input-group">
+            <select id="class-select" class="input-field" disabled>
+              <option value="">Escolha o curso primeiro</option>
+            </select>
+            <i class="fas fa-dice-d20 input-icon"></i>
+          </div>
+
+          <div
+            id="register-message"
+            class="text-sm mt-2 text-center text-red-500 hidden"
+          ></div>
+
+          <!-- Botões -->
+          <div class="flex gap-3 mt-6">
+            <a href="login.html">
+              <button id="backButton" class="flex-1 btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+              </button>
+            </a>
+            <button id="registerSubmitButton" class="flex-1 btn-primary">
+              <i class="fas fa-user-plus mr-2"></i>
+              Cadastrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script do tema -->
+    <script type="module">
+      import { applyThemeOnLoad, toggleTheme } from "./src/js/mode.js";
+      applyThemeOnLoad();
+      window.toggleTheme = toggleTheme;
+    </script>
+    
+  </body>
+</html>
