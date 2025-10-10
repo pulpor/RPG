@@ -1,1 +1,0 @@
-# Sistema RPG Educacional - Projeto Integrador 2025

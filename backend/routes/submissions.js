@@ -1,77 +1,82 @@
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
 const router = express.Router();
 
-// Caminho correto para o arquivo submissions.json
-const caminhoSubmissions = path.join(__dirname, '../data/submissions.json');
-const caminhoUsers = path.join(__dirname, '../data/users.json');
-
 const { autenticar, ehMestre } = require('../middleware/auth');
-
-const { users, missions, submissions, submissionIdCounter } = require('../inicializacao');
 const { upload } = require('../utils/armazenamentoArquivos');
-const { updateUserLevel, calculateLevel } = require('../utils/levelSystem');
-
-// Função auxiliar para atualizar o XP do usuário
-async function updateUserXP(userId, xpToAdd) {
-  const user = users.find(u => u.id === parseInt(userId));
-  if (user) {
-    user.xp = (user.xp || 0) + xpToAdd;
-    user.level = calculateLevel(user.xp).currentLevel;
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-  }
-}
 
 router.post('/submit', autenticar, upload, async (req, res) => {
-  const { missionId } = req.body;
-  const userId = req.user.userId;
-  console.log('Processando submissão:', { missionId, userId, files: req.files, body: req.body });
-  const mission = missions.find(m => m.id === parseInt(missionId));
-  if (!mission) {
-    return res.status(404).json({ error: 'Missão não encontrada' });
-  }
-  const submission = {
-    id: submissionIdCounter.value++,
-    userId,
-    missionId: parseInt(missionId),
-    filePaths: req.files.code ? req.files.code.map(file => file.path) : [],
-    submittedAt: new Date(),
-    pending: true,
-    status: 'pending',
-    missionTitle: mission.titulo || mission.title || 'Missão sem título',
-    xp: mission.xp,
-    completed: false
-  };
-  submissions.push(submission);
   try {
-    await fs.writeFile(caminhoSubmissions, JSON.stringify(submissions, null, 2));
-    console.log('submissions.json salvo com sucesso:', submission);
-    res.json({ message: 'Submissão enviada com sucesso' });
+    const { missionId } = req.body;
+    const userId = req.user.userId;
+    console.log('Processando submissão:', { missionId, userId, files: req.files, body: req.body });
+
+    // Buscar informações do usuário e missão usando serviços Firebase
+    const userService = require('../services/userService');
+    const missionService = require('../services/missionService');
+
+    // Obter usuário
+    const user = await userService.getUserById(userId.toString());
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Obter missão
+    const mission = await missionService.getMissionById(missionId.toString());
+    if (!mission) {
+      return res.status(404).json({ error: 'Missão não encontrada' });
+    }
+
+    // Preparar dados da submissão
+    const submissionData = {
+      userId: userId.toString(),
+      username: user.username,
+      masterUsername: user.masterUsername,
+      missionId: missionId.toString(),
+      submittedAt: new Date().toISOString(),
+      pending: true,
+      status: 'pending',
+      missionTitle: mission.titulo || mission.title || 'Missão sem título',
+      xp: mission.xp,
+      completed: false
+    };
+
+    // Usar o serviço de submissões para Firebase
+    const submissionService = require('../services/submissionService');
+    const files = req.files && req.files.code ? req.files.code : [];
+    const result = await submissionService.createSubmission(submissionData, files);
+
+    console.log('✅ Submissão enviada com sucesso:', result.id);
+    res.json({ message: 'Submissão enviada com sucesso', id: result.id });
   } catch (err) {
-    console.error('Erro ao salvar submissions.json:', err);
+    console.error('❌ Erro ao processar submissão:', err);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-router.get('/my-submissions', autenticar, (req, res) => {
+router.get('/my-submissions', autenticar, async (req, res) => {
   const userId = req.user.userId;
   console.log('[DEBUG] Buscando submissões do usuário:', userId);
 
   try {
-    const userSubmissions = submissions.filter(sub => parseInt(sub.userId) === parseInt(userId));
+    // Usar o serviço de submissões para Firebase
+    const submissionService = require('../services/submissionService');
+    const missionService = require('../services/missionService');
+
+    // Buscar submissões do usuário pelo serviço
+    const userSubmissions = await submissionService.getSubmissionsByUser(userId.toString());
     console.log('[DEBUG] Submissões encontradas:', userSubmissions.length);
 
-    const enrichedSubmissions = userSubmissions.map(sub => {
-      const mission = missions.find(m => m.id === parseInt(sub.missionId));
+    // Enriquecer com dados de missões
+    const enrichedSubmissions = await Promise.all(userSubmissions.map(async (sub) => {
+      const mission = await missionService.getMissionById(sub.missionId);
       return {
         ...sub,
         missionTitle: mission ? (mission.titulo || mission.title || 'Missão Desconhecida') : 'Missão Desconhecida',
         missionDescription: mission ? mission.description : ''
       };
-    });
+    }));
 
-    console.log('[DEBUG] Submissões do usuário enriquecidas:', enrichedSubmissions);
+    console.log('[DEBUG] Submissões do usuário enriquecidas:', enrichedSubmissions.length);
     res.json(enrichedSubmissions);
   } catch (err) {
     console.error('[DEBUG] Erro na rota GET /my-submissions:', err);
@@ -79,16 +84,30 @@ router.get('/my-submissions', autenticar, (req, res) => {
   }
 });
 
-router.get('/', autenticar, ehMestre, (req, res) => {
+router.get('/', autenticar, ehMestre, async (req, res) => {
   console.log('[DEBUG] Rota GET /submissoes chamada');
   console.log('[DEBUG] Usuário autenticado:', req.user);
-  console.log('[DEBUG] Total de submissões:', submissions.length);
 
   try {
-    const enrichedSubmissions = submissions.map(sub => {
+    // Usar o serviço de submissões para Firebase
+    const submissionService = require('../services/submissionService');
+    const userService = require('../services/userService');
+    const missionService = require('../services/missionService');
+
+    // Filtrar por mestre, se necessário
+    const masterUsername = req.user.username;
+    const filters = req.user.role === 'master' ? { masterUsername } : {};
+
+    // Buscar submissões pelo serviço
+    const allSubmissions = await submissionService.getAllSubmissions(filters);
+    console.log('[DEBUG] Total de submissões:', allSubmissions.length);
+
+    // Enriquecer com dados de usuários e missões
+    const enrichedSubmissions = await Promise.all(allSubmissions.map(async (sub) => {
       console.log('[DEBUG] Processando submissão:', sub.id);
-      const user = users.find(u => u.id === parseInt(sub.userId));
-      const mission = missions.find(m => m.id === parseInt(sub.missionId));
+
+      const user = await userService.getUserById(sub.userId);
+      const mission = await missionService.getMissionById(sub.missionId);
 
       console.log('[DEBUG] Usuário encontrado:', user ? user.username : 'não encontrado');
       console.log('[DEBUG] Missão encontrada:', mission ? (mission.titulo || mission.title || 'não encontrada') : 'não encontrada');
@@ -100,9 +119,9 @@ router.get('/', autenticar, ehMestre, (req, res) => {
         userYear: user ? user.year : 'N/A',
         missionTitle: mission ? (mission.titulo || mission.title || 'Desconhecida') : 'Desconhecida'
       };
-    });
+    }));
 
-    console.log('[DEBUG] Submissões enriquecidas:', enrichedSubmissions);
+    console.log('[DEBUG] Submissões enriquecidas:', enrichedSubmissions.length);
     res.json(enrichedSubmissions);
   } catch (err) {
     console.error('[DEBUG] Erro na rota GET /submissoes:', err);
@@ -111,104 +130,124 @@ router.get('/', autenticar, ehMestre, (req, res) => {
 });
 
 router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
-  const submissionId = parseInt(req.params.id);
+  const submissionId = req.params.id;
   const { feedback } = req.body;
 
   console.log('[DEBUG] Aprovando submissão:', submissionId);
 
-  const submission = submissions.find(s => s.id === submissionId);
-  if (!submission) {
-    return res.status(404).json({ error: 'Submissão não encontrada' });
-  }
+  try {
+    // Usar serviços Firebase
+    const submissionService = require('../services/submissionService');
+    const userService = require('../services/userService');
 
-  const user = users.find(u => u.id === parseInt(submission.userId));
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
-  }
-
-  // Atualizar XP apenas se a submissão não foi completada antes
-  const wasAlreadyCompleted = submission.completed;
-
-  submission.status = 'approved';
-  submission.pending = false;
-  submission.completed = true;
-  submission.feedback = feedback || '';
-
-  // Atualizar XP apenas se a missão não foi completada antes
-  if (!wasAlreadyCompleted) {
-    await updateUserXP(submission.userId, submission.xp);
-
-    // Registrar no histórico do usuário
-    if (!user.history) {
-      user.history = [];
+    // Buscar submissão por ID
+    const submission = await submissionService.getSubmissionById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Submissão não encontrada' });
     }
 
-    user.history.push({
-      type: 'mission_approved',
-      missionId: submission.missionId,
-      missionTitle: submission.missionTitle || 'Missão',
-      xpGained: submission.xp,
+    // Buscar usuário relacionado
+    const user = await userService.getUserById(submission.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Atualizar XP apenas se a submissão não foi completada antes
+    const wasAlreadyCompleted = submission.completed;
+
+    // Aprovar a submissão
+    const updatedSubmission = await submissionService.approveSubmission(submissionId, {
       feedback: feedback || '',
-      appliedBy: req.user.userId,
-      appliedAt: new Date().toISOString()
+      xpAwarded: submission.xp || 0
     });
 
-    // Salvar o histórico no arquivo users.json
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-  }
+    // Atualizar XP apenas se a missão não foi completada antes
+    let updatedUser = user;
+    if (!wasAlreadyCompleted) {
+      // Adicionar XP ao usuário
+      updatedUser = await userService.addXP(user.id, submission.xp || 0);
 
-  try {
-    await fs.writeFile(caminhoSubmissions, JSON.stringify(submissions, null, 2));
-    console.log('[DEBUG] Submissão aprovada e arquivos salvos');
-    res.json({ submission, user: { ...user, password: undefined } });
+      // Registrar no histórico do usuário
+      const historyEntry = {
+        type: 'mission_approved',
+        missionId: submission.missionId,
+        missionTitle: submission.missionTitle || 'Missão',
+        xpGained: submission.xp || 0,
+        feedback: feedback || '',
+        appliedBy: req.user.userId,
+        appliedAt: new Date().toISOString()
+      };
+
+      // Adicionar ao histórico
+      const history = Array.isArray(user.history) ? [...user.history] : [];
+      history.push(historyEntry);
+
+      // Atualizar histórico do usuário
+      updatedUser = await userService.updateUser(user.id, { history });
+    }
+
+    console.log('[DEBUG] Submissão aprovada com sucesso:', submissionId);
+    res.json({
+      submission: updatedSubmission,
+      user: { ...updatedUser, password: undefined }
+    });
   } catch (err) {
-    console.error('Erro ao salvar arquivos:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[DEBUG] Erro ao aprovar submissão:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
 
 router.post('/:id/reject', autenticar, ehMestre, async (req, res) => {
-  const submissionId = parseInt(req.params.id);
+  const submissionId = req.params.id;
+  const { feedback } = req.body;
 
   console.log('[DEBUG] Rejeitando submissão:', submissionId);
 
-  const index = submissions.findIndex(s => s.id === submissionId);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Submissão não encontrada' });
-  }
+  try {
+    // Usar serviços Firebase
+    const submissionService = require('../services/submissionService');
+    const userService = require('../services/userService');
 
-  submissions[index].status = 'rejected';
-  submissions[index].pending = false;
-  submissions[index].completed = false;
-  submissions[index].feedback = req.body.feedback || '';
-
-  // Registrar no histórico do usuário
-  const user = users.find(u => u.id === parseInt(submissions[index].userId));
-  if (user) {
-    if (!user.history) {
-      user.history = [];
+    // Buscar submissão por ID
+    const submission = await submissionService.getSubmissionById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Submissão não encontrada' });
     }
 
-    user.history.push({
+    // Buscar usuário relacionado
+    const user = await userService.getUserById(submission.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Rejeitar a submissão
+    const updatedSubmission = await submissionService.rejectSubmission(submissionId, feedback || '');
+
+    // Registrar no histórico do usuário
+    const historyEntry = {
       type: 'mission_rejected',
-      missionId: submissions[index].missionId,
-      missionTitle: submissions[index].missionTitle || 'Missão',
-      feedback: req.body.feedback || '',
+      missionId: submission.missionId,
+      missionTitle: submission.missionTitle || 'Missão',
+      feedback: feedback || '',
       appliedBy: req.user.userId,
       appliedAt: new Date().toISOString()
+    };
+
+    // Adicionar ao histórico
+    const history = Array.isArray(user.history) ? [...user.history] : [];
+    history.push(historyEntry);
+
+    // Atualizar histórico do usuário
+    const updatedUser = await userService.updateUser(user.id, { history });
+
+    console.log('[DEBUG] Submissão rejeitada com sucesso:', submissionId);
+    res.json({
+      message: 'Submissão rejeitada',
+      submission: updatedSubmission
     });
-
-    // Salvar o histórico no arquivo users.json
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-  }
-
-  try {
-    await fs.writeFile(caminhoSubmissions, JSON.stringify(submissions, null, 2));
-    console.log('[DEBUG] Submissão rejeitada e arquivo salvo');
-    res.json({ message: 'Submissão rejeitada' });
   } catch (err) {
-    console.error('Erro ao salvar submissions.json:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[DEBUG] Erro ao rejeitar submissão:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
 

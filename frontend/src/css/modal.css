@@ -1,0 +1,105 @@
+/* Estilos específicos para modais */
+.feedback-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(4px);
+}
+
+.feedback-modal-content {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Estilos para modo claro - MELHORADO */
+html:not([data-theme="dark"]) .feedback-modal-content {
+  background: #ffffff !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+/* Estilos para modo escuro */
+html[data-theme="dark"] .feedback-modal-content {
+  background: #1a202c !important;
+  border: 2px solid rgba(74, 85, 104, 0.6) !important;
+}
+
+/* Cabeçalho do modal */
+.feedback-modal-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 100%) !important;
+  color: white !important;
+  padding: 1.5rem !important;
+  border-bottom: none !important;
+}
+
+/* Corpo do modal - MELHORADO para modo claro */
+.feedback-modal-body {
+  padding: 1.5rem !important;
+  background: #ffffff !important;
+  color: #1a202c !important;
+}
+
+html[data-theme="dark"] .feedback-modal-body {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+}
+
+/* Textos no modo claro - MELHORADO */
+html:not([data-theme="dark"]) .feedback-modal-body h1,
+html:not([data-theme="dark"]) .feedback-modal-body h2,
+html:not([data-theme="dark"]) .feedback-modal-body h3,
+html:not([data-theme="dark"]) .feedback-modal-body h4,
+html:not([data-theme="dark"]) .feedback-modal-body strong {
+  color: #1a202c !important;
+}
+
+html:not([data-theme="dark"]) .feedback-modal-body p,
+html:not([data-theme="dark"]) .feedback-modal-body li,
+html:not([data-theme="dark"]) .feedback-modal-body span {
+  color: #374151 !important;
+}
+
+/* Estilos para código em markdown - MELHORADO */
+.feedback-modal-body pre {
+  background: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+  padding: 1rem !important;
+  margin: 1rem 0 !important;
+  overflow-x: auto !important;
+}
+
+.feedback-modal-body code {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.25rem !important;
+  font-family: "Courier New", monospace !important;
+}
+
+html[data-theme="dark"] .feedback-modal-body pre {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme="dark"] .feedback-modal-body code {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #e2e8f0 !important;
+}
+
+/* Seções informativas - MELHORADO */
+html:not([data-theme="dark"]) .feedback-modal-body .bg-gray-50 {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Botões do modal */
+.feedback-modal-footer {
+  padding: 1rem 1.5rem !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  border-top: 2px solid #e2e8f0 !important;
+  background: #f9fafb !important;
+}
+
+html[data-theme="dark"] .feedback-modal-footer {
+  border-top: 2px solid rgba(74, 85, 104, 0.6) !important;
+  background: #0f172a !important;
+}

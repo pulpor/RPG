@@ -1,32 +1,39 @@
 const express = require('express');
 const { autenticar, ehMestre } = require('../middleware/auth');
-const { users, submissions } = require('../inicializacao');
 const fs = require('fs').promises;
 const path = require('path');
 const { updateUserLevel, getLevelInfo } = require('../utils/levelSystem');
 const router = express.Router();
 
-// Caminho correto para o arquivo users.json
-const caminhoUsers = path.join(__dirname, '../data/users.json');
-const caminhoSubmissions = path.join(__dirname, '../data/submissions.json');
-const caminhoTurmas = path.join(__dirname, '../data/turmas.json');
+// Usar serviços Firebase
+const userService = require('../services/userService');
+const submissionService = require('../services/submissionService');
 
-router.get('/students', autenticar, ehMestre, (req, res) => {
-  res.json(users.filter(u => !u.isMaster));
+router.get('/students', autenticar, ehMestre, async (req, res) => {
+  try {
+    const allUsers = await userService.getAllUsers();
+    res.json(allUsers.filter(u => !u.isMaster));
+  } catch (error) {
+    console.error('[ERROR] Erro ao buscar estudantes:', error);
+    res.status(500).json({ error: 'Erro ao buscar estudantes' });
+  }
 });
 
-router.get('/approved-students', autenticar, ehMestre, (req, res) => {
+router.get('/approved-students', autenticar, ehMestre, async (req, res) => {
   try {
     // Obter o master logado
-    const master = users.find(u => u.id === req.user.userId);
+    const master = await userService.getUserById(req.user.userId);
     if (!master) {
       return res.status(404).json({ error: 'Master não encontrado' });
     }
 
+    // Buscar todos os usuários do Firebase
+    const allUsers = await userService.getAllUsers();
+
     // Filtrar alunos aprovados que pertencem a este master
-    const approvedStudents = users.filter(u => 
-      !u.pending && 
-      !u.isMaster && 
+    const approvedStudents = allUsers.filter(u =>
+      !u.pending &&
+      !u.isMaster &&
       u.masterUsername === master.username
     );
 
@@ -58,61 +65,71 @@ router.get('/approved-students', autenticar, ehMestre, (req, res) => {
 });
 
 // Rota para obter informações do usuário logado
-router.get('/me', autenticar, (req, res) => {
-  const user = users.find(u => u.id === req.user.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
+router.get('/me', autenticar, async (req, res) => {
+  try {
+    const user = await userService.getUserById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Obter informações detalhadas do nível
+    const levelInfo = getLevelInfo(user.xp || 0);
+
+    res.json({
+      id: user.id,
+      username: user.username,
+      fullname: user.fullname,
+      class: user.class,
+      year: user.year,
+      level: user.level,
+      xp: user.xp,
+      isMaster: user.isMaster,
+      levelInfo: levelInfo
+    });
+  } catch (error) {
+    console.error('[ERROR] Erro ao buscar usuário:', error);
+    res.status(500).json({ error: 'Erro ao buscar informações do usuário' });
   }
-
-  // Obter informações detalhadas do nível
-  const levelInfo = getLevelInfo(user.xp || 0);
-
-  res.json({
-    id: user.id,
-    username: user.username,
-    fullname: user.fullname,
-    class: user.class,
-    year: user.year,
-    level: user.level,
-    xp: user.xp,
-    isMaster: user.isMaster,
-    levelInfo: levelInfo
-  });
 });
 
 // Rota para obter histórico de penalidades e recompensas do usuário logado
-router.get('/my-penalties-rewards', autenticar, (req, res) => {
-  console.log('[DEBUG BACKEND] Chamada para /my-penalties-rewards:', req.user);
-  const user = users.find(u => u.id === req.user.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
+router.get('/my-penalties-rewards', autenticar, async (req, res) => {
+  try {
+    console.log('[DEBUG BACKEND] Chamada para /my-penalties-rewards:', req.user);
+    const user = await userService.getUserById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Retornar histórico se existir, senão array vazio
+    const history = user.history || [];
+
+    // Filtrar apenas penalidades e recompensas (excluir outros tipos de histórico se houver)
+    const penaltiesRewards = history.filter(item =>
+      item.type === 'penalty' || item.type === 'reward'
+    ).map(item => ({
+      type: item.type,
+      xp: item.amount,
+      reason: item.reason,
+      createdAt: item.appliedAt,
+      appliedBy: item.appliedBy
+    }));
+
+    console.log('[DEBUG BACKEND] Histórico de penalidades/recompensas:', penaltiesRewards.length);
+    res.json(penaltiesRewards);
+  } catch (error) {
+    console.error('[ERROR] Erro ao buscar penalidades/recompensas:', error);
+    res.status(500).json({ error: 'Erro ao buscar histórico' });
   }
-
-  // Retornar histórico se existir, senão array vazio
-  const history = user.history || [];
-
-  // Filtrar apenas penalidades e recompensas (excluir outros tipos de histórico se houver)
-  const penaltiesRewards = history.filter(item =>
-    item.type === 'penalty' || item.type === 'reward'
-  ).map(item => ({
-    type: item.type,
-    xp: item.amount,
-    reason: item.reason,
-    createdAt: item.appliedAt,
-    appliedBy: item.appliedBy
-  }));
-
-  console.log('[DEBUG BACKEND] Histórico de penalidades/recompensas:', penaltiesRewards.length);
-  res.json(penaltiesRewards);
 });
 
-router.get('/pending-users', autenticar, ehMestre, (req, res) => {
+router.get('/pending-users', autenticar, ehMestre, async (req, res) => {
   try {
     console.log('[DEBUG BACKEND] ================================');
     console.log('[DEBUG BACKEND] Chamada para pending-users (com autenticação)');
-    
-    // Obter o master logado
-    const master = users.find(u => u.id === req.user.userId);
+
+    // Obter o master logado do Firebase
+    const master = await userService.getUserById(req.user.userId);
     if (!master) {
       console.log('[DEBUG BACKEND] Master não encontrado para userId:', req.user.userId);
       return res.status(404).json({ error: 'Master não encontrado' });
@@ -139,7 +156,7 @@ router.get('/pending-users', autenticar, ehMestre, (req, res) => {
     // Mapear cursos para áreas
     const cursoToArea = {
       "tecnologia": "tecnologia",
-      "gastronomia": "gastronomia", 
+      "gastronomia": "gastronomia",
       "gestao": "gestao",
       "oftalmologia": "oftalmo",
       "beleza": "beleza",
@@ -150,10 +167,11 @@ router.get('/pending-users', autenticar, ehMestre, (req, res) => {
     const masterArea = masterClassToArea[master.class];
     console.log('[DEBUG BACKEND] Master:', master.username, 'Classe:', master.class, 'Área detectada:', masterArea);
 
-    // Listar todos os usuários pendentes primeiro
-    const allPendingUsers = users.filter(u => u.pending && !u.isMaster);
+    // Buscar todos os usuários do Firebase e filtrar pendentes
+    const allUsers = await userService.getAllUsers();
+    const allPendingUsers = allUsers.filter(u => u.pending && !u.isMaster);
     console.log('[DEBUG BACKEND] Total de usuários pendentes:', allPendingUsers.length);
-    
+
     if (allPendingUsers.length > 0) {
       console.log('[DEBUG BACKEND] Usuários pendentes encontrados:');
       allPendingUsers.forEach(u => {
@@ -163,7 +181,7 @@ router.get('/pending-users', autenticar, ehMestre, (req, res) => {
 
     // Filtrar usuários pendentes por área
     let pendingUsers = allPendingUsers;
-    
+
     if (masterArea) {
       pendingUsers = pendingUsers.filter(u => {
         const userArea = cursoToArea[u.curso] || cursoToArea[u.area] || null;
@@ -174,7 +192,7 @@ router.get('/pending-users', autenticar, ehMestre, (req, res) => {
 
     console.log('[DEBUG BACKEND] Usuários pendentes filtrados para área', masterArea, ':', pendingUsers.length);
     console.log('[DEBUG BACKEND] ================================');
-    
+
     res.json(pendingUsers);
   } catch (err) {
     console.error('[DEBUG BACKEND] Erro ao buscar usuários pendentes:', err);
@@ -229,19 +247,19 @@ router.delete('/turmas', autenticar, ehMestre, async (req, res) => {
 
 router.post('/approve-user', autenticar, ehMestre, async (req, res) => {
   const { userId, turma } = req.body;
-  
+
   // Validação: turma é obrigatória
   if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
-    return res.status(400).json({ 
-      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.' 
+    return res.status(400).json({
+      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
     });
   }
-  
+
   const user = users.find(u => u.id === parseInt(userId));
   if (!user) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
-  
+
   // Obter o master logado
   const master = users.find(u => u.id === req.user.userId);
   if (!master) {
@@ -251,7 +269,7 @@ router.post('/approve-user', autenticar, ehMestre, async (req, res) => {
   // Atribuir turma
   user.turma = turma.trim();
   user.assignedTurma = turma.trim();
-  
+
   // Garantir que o usuário tenha o masterUsername correto
   user.masterUsername = master.username;
   user.pending = false;
@@ -271,19 +289,19 @@ router.post('/approve-user', autenticar, ehMestre, async (req, res) => {
 router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
   const userId = parseInt(req.params.id);
   const { turma } = req.body;
-  
+
   // Validação: turma é obrigatória
   if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
-    return res.status(400).json({ 
-      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.' 
+    return res.status(400).json({
+      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
     });
   }
-  
+
   const user = users.find(u => u.id === userId);
   if (!user) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
-  
+
   // Obter o master logado
   const master = users.find(u => u.id === req.user.userId);
   if (!master) {
@@ -293,7 +311,7 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
   // Atribuir turma
   user.turma = turma.trim();
   user.assignedTurma = turma.trim();
-  
+
   // Garantir que o usuário tenha o masterUsername correto
   user.masterUsername = master.username;
   user.pending = false;
@@ -332,9 +350,9 @@ router.post('/:id/reject', autenticar, ehMestre, async (req, res) => {
   if (index === -1) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
-  
+
   console.log('[DEBUG BACKEND] Usuário rejeitado via REST:', users[index].username);
-  
+
   users.splice(index, 1);
   try {
     await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
@@ -524,53 +542,53 @@ router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
     const { novaTurma } = req.body;
-    
+
     // Validação: nova turma é obrigatória
     if (!novaTurma || typeof novaTurma !== 'string' || novaTurma.trim() === '') {
-      return res.status(400).json({ 
-        error: 'Nova turma é obrigatória.' 
+      return res.status(400).json({
+        error: 'Nova turma é obrigatória.'
       });
     }
-    
+
     const user = users.find(u => u.id === userId);
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
-    
+
     // Verificar se o usuário é um aluno (não master) e não está pendente
     if (user.isMaster || user.pending) {
       return res.status(400).json({ error: 'Só é possível trocar alunos aprovados de turma' });
     }
-    
+
     // Obter o master logado
     const master = users.find(u => u.id === req.user.userId);
     if (!master) {
       return res.status(404).json({ error: 'Master não encontrado' });
     }
-    
+
     // Verificar se o aluno pertence a este master
     if (user.masterUsername !== master.username) {
       return res.status(403).json({ error: 'Você só pode trocar alunos da sua área' });
     }
-    
+
     const turmaAnterior = user.turma || user.assignedTurma;
-    
+
     // Atualizar a turma do aluno
     user.turma = novaTurma.trim();
     user.assignedTurma = novaTurma.trim();
-    
+
     // Salvar as alterações
     await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-    
+
     console.log(`[DEBUG BACKEND] Aluno ${user.username} transferido de "${turmaAnterior}" para "${novaTurma}" pelo master ${master.username}`);
-    
+
     res.json({
       message: 'Aluno transferido com sucesso',
       user: { ...user, password: undefined },
       turmaAnterior,
       novaTurma
     });
-    
+
   } catch (err) {
     console.error('Erro ao trocar aluno de turma:', err);
     res.status(500).json({ error: 'Erro interno do servidor' });

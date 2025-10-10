@@ -28,7 +28,7 @@ export class FeedbackModal {
 
         // Criar overlay
         this.modal = document.createElement('div');
-        this.modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        this.modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 feedback-modal-overlay';
         this.modal.onclick = (e) => {
             if (e.target === this.modal) {
                 this.close();
@@ -40,6 +40,7 @@ export class FeedbackModal {
         modalContent.className = `
             bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] 
             overflow-hidden flex flex-col transform transition-all duration-300 scale-95 opacity-0
+            border border-gray-200 dark:border-gray-700 feedback-modal-content
         `;
 
         modalContent.innerHTML = this.buildModalHTML(feedbackData, submissionInfo);
@@ -70,7 +71,7 @@ export class FeedbackModal {
         const timestamp = new Date(feedbackData.timestamp || Date.now()).toLocaleString('pt-BR');
 
         let feedbackContent = '';
-        
+
         if (feedbackData.success) {
             feedbackContent = this.formatFeedback(feedbackData.feedback);
         } else {
@@ -94,7 +95,7 @@ export class FeedbackModal {
 
         return `
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-white">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-white shadow-md feedback-modal-header">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -147,6 +148,7 @@ export class FeedbackModal {
             </div>
 
             <!-- Conteúdo do Feedback -->
+            <div class="feedback-modal-body overflow-y-auto flex-1" style="background: #ffffff; color: #1a202c;">
             <div class="flex-1 overflow-y-auto max-h-96 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
                 ${feedbackContent}
             </div>
@@ -156,10 +158,10 @@ export class FeedbackModal {
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-500 dark:text-gray-400">
                         <i class="fas fa-lightbulb text-yellow-500 mr-1"></i>
-                        ${feedbackData.isDemoFeedback ? 
-                            'Este é um feedback de demonstração. Configure a API do Gemini para análise personalizada.' : 
-                            'Este feedback foi gerado automaticamente pela IA e pode conter sugestões para melhoria.'
-                        }
+                        ${feedbackData.isDemoFeedback ?
+                'Este é um feedback de demonstração. Configure a API do Gemini para análise personalizada.' :
+                'Este feedback foi gerado automaticamente pela IA e pode conter sugestões para melhoria.'
+            }
                     </div>
                     <div class="flex space-x-2">
                         <button 
@@ -186,30 +188,30 @@ export class FeedbackModal {
      * @returns {string} - Feedback formatado em HTML
      */
     formatFeedback(feedback) {
-        // Converter markdown simples para HTML
+        // Converter markdown simples para HTML com estilos inline para modo claro
         let formattedFeedback = feedback
             // Headers
-            .replace(/### (.*)/g, '<h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 mt-6 flex items-center"><span class="mr-2">$1</span></h3>')
-            .replace(/## (.*)/g, '<h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 mt-6">$1</h2>')
-            .replace(/# (.*)/g, '<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">$1</h1>')
+            .replace(/### (.*)/g, '<h3 class="text-lg font-semibold mb-3 mt-6 flex items-center" style="color: #1a202c;"><span class="mr-2">$1</span></h3>')
+            .replace(/## (.*)/g, '<h2 class="text-xl font-bold mb-4 mt-6" style="color: #1a202c;">$1</h2>')
+            .replace(/# (.*)/g, '<h1 class="text-2xl font-bold mb-4" style="color: #1a202c;">$1</h1>')
             // Bold
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-800 dark:text-gray-200">$1</strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold" style="color: #1a202c;">$1</strong>')
             // Lists
-            .replace(/^- (.*)/gm, '<li class="ml-4 mb-2 text-gray-700 dark:text-gray-300">• $1</li>')
+            .replace(/^- (.*)/gm, '<li class="ml-4 mb-2" style="color: #374151;">• $1</li>')
             // Code blocks
-            .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm text-gray-800 dark:text-gray-200">$2</code></pre>')
+            .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="p-4 rounded-lg overflow-x-auto my-4" style="background: #f3f4f6; border: 1px solid #d1d5db;"><code class="text-sm" style="color: #1f2937; font-family: \'Courier New\', monospace;">$2</code></pre>')
             // Inline code
-            .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm text-gray-800 dark:text-gray-200">$1</code>')
+            .replace(/`([^`]+)`/g, '<code class="px-2 py-1 rounded text-sm" style="background: #f3f4f6; color: #1f2937; font-family: \'Courier New\', monospace;">$1</code>')
             // Line breaks
-            .replace(/\n\n/g, '</p><p class="mb-4 text-gray-700 dark:text-gray-300">')
+            .replace(/\n\n/g, '</p><p class="mb-4" style="color: #374151;">')
             .replace(/\n/g, '<br>');
 
         // Envolver em parágrafo se não começar com tag HTML
         if (!formattedFeedback.startsWith('<')) {
-            formattedFeedback = '<p class="mb-4 text-gray-700 dark:text-gray-300">' + formattedFeedback + '</p>';
+            formattedFeedback = '<p class="mb-4" style="color: #374151;">' + formattedFeedback + '</p>';
         }
 
-        return `<div class="p-6 prose prose-sm max-w-none dark:prose-invert">${formattedFeedback}</div>`;
+        return `<div class="p-6 prose prose-sm max-w-none" style="color: #1a202c;">${formattedFeedback}</div>`;
     }
 
     /**
@@ -252,14 +254,14 @@ export class FeedbackModal {
             if (feedbackContent) {
                 const text = feedbackContent.textContent || feedbackContent.innerText;
                 await navigator.clipboard.writeText(text);
-                
+
                 const copyBtn = this.modal.querySelector('#copy-feedback-btn');
                 if (copyBtn) {
                     const originalText = copyBtn.innerHTML;
                     copyBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Copiado!';
                     copyBtn.classList.add('bg-green-600', 'text-white');
                     copyBtn.classList.remove('bg-gray-200', 'dark:bg-gray-600', 'text-gray-700', 'dark:text-gray-300');
-                    
+
                     setTimeout(() => {
                         copyBtn.innerHTML = originalText;
                         copyBtn.classList.remove('bg-green-600', 'text-white');
@@ -305,11 +307,11 @@ export class FeedbackModal {
             document.body.removeChild(this.modal);
             this.modal = null;
         }
-        
+
         if (this.handleEscape) {
             document.removeEventListener('keydown', this.handleEscape);
         }
-        
+
         this.isOpen = false;
         document.body.style.overflow = '';
     }

@@ -2,6 +2,9 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// Inicializar Firebase (deve ser feito antes de importar as rotas)
+require('./config/firebase');
+
 const express = require('express');
 const cors = require('cors');
 const autenticacaoRotas = require('./routes/auth');
@@ -92,4 +95,6 @@ app.listen(port, () => {
   console.log('   - GET  /usuarios/me (requer autenticação)');
   console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
   console.log('✅ Sistema pronto para uso!');
+  console.log('🔥 Firebase Firestore: Conectado');
+  console.log('🤖 Gemini 2.5-Flash: Configurado');
 });

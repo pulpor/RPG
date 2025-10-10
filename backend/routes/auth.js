@@ -1,16 +1,14 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const fs = require('fs').promises;
 const path = require('path');
 
 const router = express.Router();
 
-// Usar a mesma instância de users e userIdCounter do sistema de inicialização
-const { users, userIdCounter } = require('../inicializacao');
+// Usar o serviço Firebase para usuários
+const userService = require('../services/userService');
 
 const secret = process.env.JWT_SECRET || 'sua-chave-secreta';
-const filePath = path.join(__dirname, '..', 'data', 'users.json');
 
 // Mapeamento de curso para username do mestre responsável
 const masterMap = {
@@ -51,7 +49,10 @@ router.post('/register', async (req, res) => {
   }
 
   const trimmedUsername = username.trim();
-  if (users.find(u => u.username === trimmedUsername)) {
+
+  // Verificar se usuário já existe no Firebase
+  const existingUser = await userService.getUserByUsername(trimmedUsername);
+  if (existingUser) {
     return res.status(400).json({ error: 'Usuário já existe' });
   }
 
@@ -61,8 +62,7 @@ router.post('/register', async (req, res) => {
     masterUsername = masterMap[curso];
   }
 
-  const user = {
-    id: userIdCounter.value++,
+  const userData = {
     username: username.trim(),
     fullname: fullname.trim(),
     password: await bcrypt.hash(password, 10),
@@ -72,14 +72,16 @@ router.post('/register', async (req, res) => {
     level: 1,
     xp: 0,
     pending: !isMaster,
-    masterUsername // mestre responsável pela aprovação
+    masterUsername, // mestre responsável pela aprovação
+    createdAt: new Date().toISOString()
   };
-  users.push(user);
+
   try {
-    await fs.writeFile(filePath, JSON.stringify(users, null, 2));
-    res.json({ success: true, user: { ...user, password: undefined } });
+    // Salvar no Firebase
+    const firebaseUser = await userService.createUser(userData);
+    res.json({ success: true, user: { ...firebaseUser, password: undefined } });
   } catch (err) {
-    console.error('Erro ao salvar users.json:', err);
+    console.error('Erro ao criar usuário:', err);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -87,7 +89,9 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   console.log("[LOGIN] username recebido:", username);
-  const user = users.find(u => u.username === username);
+
+  // Buscar usuário do Firebase
+  const user = await userService.getUserByUsername(username);
   console.log("[LOGIN] usuário encontrado:", user ? user.username : null);
 
   if (!user) {

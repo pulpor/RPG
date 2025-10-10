@@ -55,22 +55,8 @@ backup/
 *.tmp
 *.temp
 
-# Test files (manter apenas em desenvolvimento)
-tests/
-**/test-*
-**/debug-*
-*.temp
-
 # Cache
 .cache/
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Test results
-test-results/
-*.test.js
-*.spec.js
 
 # Debug files
 debug-*.js

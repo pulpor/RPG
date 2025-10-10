@@ -454,6 +454,16 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
 
     missionsList.innerHTML = '';
 
+    // Filtrar missões disponíveis: remover missões que já foram submetidas (pending ou approved)
+    // Apenas mostrar missões sem submissão ou com submissão rejeitada
+    const submittedMissionIds = new Set(
+        submissions
+            .filter(s => !s.isPenaltyReward && (s.status === 'pending' || s.status === 'approved'))
+            .map(s => s.missionId)
+    );
+
+    const availableMissions = missions.filter(mission => !submittedMissionIds.has(mission.id));
+
     // Seção de missões concluídas
     if (completedMissions.length > 0) {
         const completedSection = document.createElement('div');
@@ -499,19 +509,19 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     }
 
     // Seção de missões disponíveis
-    if (missions.length > 0) {
+    if (availableMissions.length > 0) {
         const availableSection = document.createElement('div');
         availableSection.innerHTML = `
             <h3 class="text-lg font-semibold text-blue-700 mb-4 flex items-center">
                 <i class="fas fa-scroll text-blue-500 mr-2"></i>
-                Missões Disponíveis (${missions.length})
+                Missões Disponíveis (${availableMissions.length})
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="available-missions-list"></div>
         `;
         missionsList.appendChild(availableSection);
 
         const availableList = document.getElementById('available-missions-list');
-        missions.forEach(mission => {
+        availableMissions.forEach(mission => {
             const card = document.createElement('div');
             card.className = 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300';
             card.innerHTML = `
@@ -544,8 +554,8 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         `;
     }
 
-    updateMissionCounters(missions, completedMissions, submissions);
-    updateMissionSelect(missions);
+    updateMissionCounters(availableMissions, completedMissions, submissions);
+    updateMissionSelect(availableMissions);
 }
 
 function updateMissionCounters(missions, completedMissions = [], submissions = []) {
