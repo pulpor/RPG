@@ -266,6 +266,12 @@
   transform: scale(1.2);
 }
 
+#login-screen{
+  width:  500px;
+  max-width: 600px;
+  margin: auto;
+}
+
 @keyframes roll {
   0% {
     transform: rotate(0deg) scale(1);

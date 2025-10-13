@@ -578,3 +578,106 @@ html[data-theme="dark"] .text-xs.font-medium {
 #submissions-filters[style*="display: block"] {
   display: block !important;
 }
+
+/* ===== MELHORIAS PARA CARDS DE SUBMISSÃO ===== */
+[data-theme="dark"] .card {
+  background: rgba(31, 41, 55, 0.95) !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+}
+
+[data-theme="dark"] .card h3,
+[data-theme="dark"] .card h4 {
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .card p {
+  color: #d1d5db !important;
+}
+
+[data-theme="dark"] .card .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .card .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .card .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+[data-theme="dark"] .card .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .card .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+[data-theme="dark"] .card .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .card .bg-gray-50 {
+  background-color: rgba(55, 65, 81, 0.7) !important;
+}
+
+[data-theme="dark"] .card .bg-gray-100 {
+  background-color: rgba(55, 65, 81, 0.8) !important;
+}
+
+[data-theme="dark"] .card .bg-white {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+}
+
+[data-theme="dark"] .card .from-blue-50 {
+  --tw-gradient-from: rgba(55, 65, 81, 0.7) !important;
+}
+
+[data-theme="dark"] .card .to-purple-50 {
+  --tw-gradient-to: rgba(67, 56, 81, 0.7) !important;
+}
+
+[data-theme="dark"] .card .border-gray-200 {
+  border-color: rgba(75, 85, 99, 0.5) !important;
+}
+
+[data-theme="dark"] .card .border-gray-700 {
+  border-color: rgba(107, 114, 128, 0.5) !important;
+}
+
+/* Status badges dark mode */
+[data-theme="dark"] .card .bg-yellow-100 {
+  background-color: rgba(217, 119, 6, 0.3) !important;
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .card .bg-green-100 {
+  background-color: rgba(5, 150, 105, 0.3) !important;
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] .card .bg-red-100 {
+  background-color: rgba(185, 28, 28, 0.3) !important;
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .card .bg-blue-50 {
+  background-color: rgba(30, 58, 138, 0.3) !important;
+}
+
+[data-theme="dark"] .card .text-blue-900 {
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .card .text-blue-800 {
+  color: #bfdbfe !important;
+}
+
+[data-theme="dark"] .card .text-blue-300 {
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .card .text-blue-200 {
+  color: #bfdbfe !important;
+}

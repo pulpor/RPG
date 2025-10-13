@@ -64,20 +64,25 @@ router.get('/', autenticar, async (req, res) => {
       // Buscar todas as missões do Firebase
       const allMissions = await missionService.getAllMissions();
 
-      // Filtrar missões por área do master
+      // Filtrar missões APENAS deste master (isolamento total)
       const filteredMissions = allMissions.filter(mission => {
-        // Se a missão tem masterId, deve ser do mesmo master
+        // Prioridade 1: Filtrar por masterUsername (mais confiável)
+        if (mission.masterUsername) {
+          return mission.masterUsername === master.username;
+        }
+
+        // Prioridade 2: Filtrar por masterId
         if (mission.masterId) {
           return mission.masterId === master.id;
         }
 
-        // Se a missão tem masterArea, deve ser da mesma área
+        // Prioridade 3: Filtrar por masterArea
         if (mission.masterArea) {
           return mission.masterArea === masterArea;
         }
 
-        // Se não tem identificação de área/master, considerar como missão geral (pode ver todas)
-        return true;
+        // Se não tem identificação, NÃO mostrar (isolamento total)
+        return false;
       });
 
       console.log(`[MISSOES] Retornando ${filteredMissions.length} missões para master ${master.username}`);
@@ -127,6 +132,7 @@ router.get('/', autenticar, async (req, res) => {
       console.log(`[DEBUG] Analisando missão ${mission.id}:`, {
         titulo: mission.titulo,
         masterId: mission.masterId,
+        masterUsername: mission.masterUsername,
         masterArea: mission.masterArea,
         turma: mission.turma,
         targetClass: mission.targetClass
@@ -138,18 +144,38 @@ router.get('/', autenticar, async (req, res) => {
         return false;
       }
 
-      // Verificar se a missão é do master do aluno
-      if (mission.masterId && studentMaster) {
+      // ===== FILTRO PRINCIPAL: APENAS MISSÕES DO SEU MESTRE =====
+      // Primeiro, verificar por masterUsername (mais confiável)
+      if (mission.masterUsername && user.masterUsername) {
+        if (mission.masterUsername !== user.masterUsername) {
+          console.log(`[DEBUG] Missão ${mission.id} excluída: masterUsername diferente (${mission.masterUsername} vs ${user.masterUsername})`);
+          return false;
+        }
+        // Se chegou aqui, a missão é do mestre correto
+        console.log(`[DEBUG] Missão ${mission.id}: masterUsername correto ✓`);
+      }
+      // Senão, verificar por masterId
+      else if (mission.masterId && studentMaster) {
         if (mission.masterId !== studentMaster.id) {
           console.log(`[DEBUG] Missão ${mission.id} excluída: masterId diferente (${mission.masterId} vs ${studentMaster.id})`);
           return false;
         }
-      } else if (mission.masterArea && masterArea) {
+        console.log(`[DEBUG] Missão ${mission.id}: masterId correto ✓`);
+      }
+      // Senão, verificar por masterArea
+      else if (mission.masterArea && masterArea) {
         if (mission.masterArea !== masterArea) {
           console.log(`[DEBUG] Missão ${mission.id} excluída: masterArea diferente (${mission.masterArea} vs ${masterArea})`);
           return false;
         }
+        console.log(`[DEBUG] Missão ${mission.id}: masterArea correto ✓`);
       }
+      // Se não tem nenhuma identificação de mestre, EXCLUIR por segurança
+      else {
+        console.log(`[DEBUG] Missão ${mission.id} excluída: sem identificação de mestre`);
+        return false;
+      }
+      // ===== FIM DO FILTRO PRINCIPAL =====
 
       // Verificar se é para a turma específica (se especificada)
       if (mission.turma && mission.turma !== user.turma && mission.turma !== user.assignedTurma) {
@@ -160,9 +186,6 @@ router.get('/', autenticar, async (req, res) => {
       // Verificar classe
       if (mission.targetClass && mission.targetClass !== 'geral' && mission.targetClass !== user.class) {
         console.log(`[DEBUG] Missão ${mission.id} excluída: classe diferente (${mission.targetClass} vs ${user.class})`);
-        return false;
-      }
-      if (mission.targetClass && mission.targetClass !== 'geral' && mission.targetClass !== user.class) {
         return false;
       }
 
@@ -178,7 +201,7 @@ router.get('/', autenticar, async (req, res) => {
         return false;
       }
 
-      console.log(`[DEBUG] Missão ${mission.id} incluída: passou em todos os filtros`);
+      console.log(`[DEBUG] Missão ${mission.id} incluída: passou em todos os filtros ✓✓✓`);
       return true;
     });
 

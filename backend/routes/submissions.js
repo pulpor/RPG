@@ -94,13 +94,20 @@ router.get('/', autenticar, ehMestre, async (req, res) => {
     const userService = require('../services/userService');
     const missionService = require('../services/missionService');
 
-    // Filtrar por mestre, se necessário
-    const masterUsername = req.user.username;
-    const filters = req.user.role === 'master' ? { masterUsername } : {};
+    // Obter informações completas do mestre
+    const master = await userService.getUserById(req.user.userId);
+    if (!master) {
+      return res.status(404).json({ error: 'Mestre não encontrado' });
+    }
+
+    console.log('[DEBUG] Mestre logado:', master.username);
+
+    // Filtrar submissões APENAS dos alunos deste mestre
+    const filters = { masterUsername: master.username };
 
     // Buscar submissões pelo serviço
     const allSubmissions = await submissionService.getAllSubmissions(filters);
-    console.log('[DEBUG] Total de submissões:', allSubmissions.length);
+    console.log('[DEBUG] Total de submissões do mestre', master.username, ':', allSubmissions.length);
 
     // Enriquecer com dados de usuários e missões
     const enrichedSubmissions = await Promise.all(allSubmissions.map(async (sub) => {
@@ -117,7 +124,9 @@ router.get('/', autenticar, ehMestre, async (req, res) => {
         username: user ? user.username : 'Desconhecido',
         userClass: user ? user.class : 'N/A',
         userYear: user ? user.year : 'N/A',
-        missionTitle: mission ? (mission.titulo || mission.title || 'Desconhecida') : 'Desconhecida'
+        userTurma: user ? (user.assignedTurma || user.turma || 'Sem turma') : 'Sem turma',
+        missionTitle: mission ? (mission.titulo || mission.title || 'Desconhecida') : 'Desconhecida',
+        missionDescription: mission ? (mission.descricao || mission.description || '') : ''
       };
     }));
 

@@ -147,10 +147,23 @@ export function renderSubmissions(submissions) {
 
 // Função para criar card de submissão
 function createSubmissionCard(submission) {
+  // Debug: verificar a data que está chegando
+  console.log('📅 Debug submissão:', {
+    id: submission.id,
+    submittedAt: submission.submittedAt,
+    typeOf: typeof submission.submittedAt
+  });
+
   const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800'
+    pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    approved: 'bg-green-100 text-green-800 border-green-300',
+    rejected: 'bg-red-100 text-red-800 border-red-300'
+  };
+
+  const statusIcons = {
+    pending: 'fa-clock',
+    approved: 'fa-check-circle',
+    rejected: 'fa-times-circle'
   };
 
   const statusText = {
@@ -162,43 +175,147 @@ function createSubmissionCard(submission) {
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Data não informada';
     try {
-      return new Date(dateStr).toLocaleDateString('pt-BR');
-    } catch {
+      const date = new Date(dateStr);
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) {
+        console.error('Data inválida recebida:', dateStr);
+        return 'Data inválida';
+      }
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Erro ao formatar data:', dateStr, error);
       return 'Data inválida';
     }
   };
 
+  // Processar arquivos
+  let filesHtml = '';
+  if (submission.filePaths && submission.filePaths.length > 0) {
+    filesHtml = `
+      <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+          <i class="fas fa-paperclip mr-2"></i>
+          Arquivos enviados (${submission.filePaths.length})
+        </h4>
+        <div class="space-y-2">
+          ${submission.filePaths.map((filePath, index) => {
+      const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || `arquivo${index + 1}`;
+      const fileUrl = submission.fileUrls?.[index] || filePath;
+      return `
+              <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
+                <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                  <i class="fas fa-file-code text-blue-600 mr-2"></i>${fileName}
+                </span>
+                <div class="flex gap-2 ml-2">
+                  <a href="${fileUrl}" download="${fileName}"
+                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+                    <i class="fas fa-download mr-1"></i>Baixar
+                  </a>
+                  <button onclick="window.open('${fileUrl}', '_blank')" 
+                          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+                    <i class="fas fa-external-link-alt mr-1"></i>Ver
+                  </button>
+                </div>
+              </div>
+            `;
+    }).join('')}
+        </div>
+      </div>
+    `;
+  } else if (submission.fileUrl) {
+    filesHtml = `
+      <div class="mb-3 flex gap-2">
+        <a href="${submission.fileUrl}" download
+           class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm inline-flex items-center">
+          <i class="fas fa-download mr-2"></i>Baixar Arquivo
+        </a>
+        <button onclick="window.open('${submission.fileUrl}', '_blank')" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm inline-flex items-center">
+          <i class="fas fa-external-link-alt mr-2"></i>Ver Arquivo
+        </button>
+      </div>
+    `;
+  }
+
   return `
-    <div class="card bg-white p-4 rounded-lg shadow hover:shadow-md transition">
-      <h3 class="font-bold mb-2">${submission.missionTitle || 'Missão não informada'}</h3>
-      <p class="text-gray-600 mb-2">${submission.description || 'Sem descrição'}</p>
-      <p class="text-sm text-gray-500 mb-2">Aluno: ${submission.studentName || 'Não informado'}</p>
-      <p class="text-sm text-gray-500 mb-2">Enviado em: ${formatDate(submission.submittedAt)}</p>
-      
-      <div class="mb-3">
-        <span class="inline-block ${statusColors[submission.status] || statusColors.pending} text-xs px-2 py-1 rounded">
+    <div class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 ${submission.status === 'pending' ? 'border-yellow-400' : submission.status === 'approved' ? 'border-green-400' : 'border-red-400'}">
+      <!-- Header -->
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-1">
+            ${submission.missionTitle || 'Missão não informada'}
+          </h3>
+          ${submission.missionDescription ? `
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              ${submission.missionDescription}
+            </p>
+          ` : ''}
+        </div>
+        <span class="inline-flex items-center ${statusColors[submission.status] || statusColors.pending} text-xs font-semibold px-3 py-1 rounded-full border">
+          <i class="fas ${statusIcons[submission.status] || statusIcons.pending} mr-1"></i>
           ${statusText[submission.status] || 'Pendente'}
         </span>
       </div>
 
-      ${submission.fileUrl ? `
-        <div class="mb-3">
-          <button onclick="openFileSecurely('${submission.fileUrl}')" 
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-            <i class="fas fa-download mr-1"></i>Ver Arquivo
-          </button>
+      <!-- Informações do Aluno -->
+      <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-750 rounded-lg">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Aluno</p>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              <i class="fas fa-user text-blue-600 mr-2"></i>${submission.username || 'Não informado'}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Turma</p>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              <i class="fas fa-users text-purple-600 mr-2"></i>${submission.userTurma || submission.turma || 'Sem turma'}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Classe</p>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              <i class="fas fa-shield-alt text-green-600 mr-2"></i>${submission.userClass || 'Não informada'}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Data de Envio</p>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              <i class="fas fa-calendar-alt text-orange-600 mr-2"></i>${formatDate(submission.submittedAt)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arquivos -->
+      ${filesHtml}
+
+      <!-- Feedback (se houver) -->
+      ${submission.feedback ? `
+        <div class="mb-4 p-3 bg-blue-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-400">
+          <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2 flex items-center">
+            <i class="fas fa-comment-alt mr-2"></i>Feedback
+          </h4>
+          <p class="text-sm text-blue-800 dark:text-blue-200">${submission.feedback}</p>
         </div>
       ` : ''}
 
+      <!-- Ações -->
       ${submission.status === 'pending' ? `
-        <div class="flex gap-2">
-          <button class="approve-submission-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+        <div class="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button class="approve-submission-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center justify-center"
                   data-submission-id="${submission.id}">
-            <i class="fas fa-check mr-1"></i>Aprovar
+            <i class="fas fa-check mr-2"></i>Aprovar
           </button>
-          <button class="reject-submission-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+          <button class="reject-submission-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center justify-center"
                   data-submission-id="${submission.id}">
-            <i class="fas fa-times mr-1"></i>Rejeitar
+            <i class="fas fa-times mr-2"></i>Rejeitar
           </button>
         </div>
       ` : ''}

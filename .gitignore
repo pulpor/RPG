@@ -69,3 +69,6 @@ web/jsons/
 web/js/
 web/html/
 web/styles/
+
+.vite/
+dist/

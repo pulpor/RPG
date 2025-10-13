@@ -467,42 +467,73 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     // Seção de missões concluídas
     if (completedMissions.length > 0) {
         const completedSection = document.createElement('div');
-        completedSection.className = 'mb-8';
+        completedSection.className = 'mb-8 col-span-full';
         completedSection.innerHTML = `
-            <h3 class="text-lg font-semibold text-green-700 mb-4 flex items-center">
-                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
-                Missões Concluídas (${completedMissions.length})
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="completed-missions-list"></div>
+            <div class="mb-6 flex items-center justify-between">
+                <h3 class="text-2xl font-bold text-green-700 dark:text-green-400 flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mr-3 shadow-lg">
+                        <i class="fas fa-trophy text-white"></i>
+                    </div>
+                    Missões Concluídas
+                </h3>
+                <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded-full font-bold text-sm">
+                    ${completedMissions.length}
+                </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="completed-missions-list"></div>
         `;
         missionsList.appendChild(completedSection);
 
         const completedList = document.getElementById('completed-missions-list');
         completedMissions.forEach(mission => {
             const card = document.createElement('div');
-            card.className = 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4 hover:shadow-md transition-all duration-300';
+            card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-l-4 border-green-500 transform hover:-translate-y-1';
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-3">
-                    <h4 class="text-lg font-bold text-green-800">${mission.titulo || mission.title || 'Missão sem título'}</h4>
-                    <div class="flex flex-col items-end">
-                        <span class="bg-green-500 text-white text-sm font-semibold px-3 py-1 rounded-full mb-1">
-                            +${mission.earnedXP || mission.xp} XP
-                        </span>
-                        <span class="text-xs text-green-600">
-                            <i class="fas fa-check-circle mr-1"></i>Concluída
-                        </span>
+                <div class="p-6">
+                    <!-- Header com título e XP -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1 pr-2">
+                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-1 line-clamp-2">
+                                ${mission.titulo || mission.title || 'Missão sem título'}
+                            </h4>
+                            <span class="inline-flex items-center text-xs text-green-600 dark:text-green-400 font-semibold">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Concluída
+                            </span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-md flex items-center">
+                                <i class="fas fa-star mr-1"></i>
+                                +${mission.earnedXP || mission.xp}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                        ${mission.descricao || mission.description || 'Sem descrição'}
+                    </p>
+
+                    <!-- Divisor -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 mb-4"></div>
+
+                    <!-- Metadados -->
+                    <div class="flex justify-between items-center text-xs">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            <span>${new Date(mission.completedAt).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
+                                <i class="fas fa-users mr-1"></i>
+                                ${mission.targetClass || 'Geral'}
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <p class="text-green-700 text-sm mb-3">${mission.descricao || mission.description || 'Sem descrição'}</p>
-                <div class="flex justify-between items-center text-xs text-green-600">
-                    <span>
-                        <i class="fas fa-calendar-alt mr-1"></i>
-                        ${new Date(mission.completedAt).toLocaleDateString('pt-BR')}
-                    </span>
-                    <span>
-                        <i class="fas fa-users mr-1"></i> ${mission.targetClass || 'Geral'}
-                    </span>
-                </div>
+
+                <!-- Barra de progresso decorativa -->
+                <div class="h-1 bg-gradient-to-r from-green-400 via-emerald-500 to-green-600"></div>
             `;
             completedList.appendChild(card);
         });
@@ -511,45 +542,88 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     // Seção de missões disponíveis
     if (availableMissions.length > 0) {
         const availableSection = document.createElement('div');
+        availableSection.className = 'col-span-full';
         availableSection.innerHTML = `
-            <h3 class="text-lg font-semibold text-blue-700 mb-4 flex items-center">
-                <i class="fas fa-scroll text-blue-500 mr-2"></i>
-                Missões Disponíveis (${availableMissions.length})
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="available-missions-list"></div>
+            <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-blue-500 dark:text-blue-400 flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
+                        <i class="fas fa-scroll text-white"></i>
+                    </div>
+                    Missões Disponíveis
+                </h2>
+                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full font-bold text-sm">
+                    ${availableMissions.length}
+                </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="available-missions-list"></div>
         `;
         missionsList.appendChild(availableSection);
 
         const availableList = document.getElementById('available-missions-list');
         availableMissions.forEach(mission => {
             const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300';
+            card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-l-4 border-blue-500 transform hover:-translate-y-1 cursor-pointer';
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">${mission.titulo || mission.title || 'Missão sem título'}</h3>
-                    <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                        ${mission.xp || 0} XP
-                    </span>
+                <div class="p-6">
+                    <!-- Header com título e XP -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1 pr-2">
+                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
+                                ${mission.titulo || mission.title || 'Missão sem título'}
+                            </h4>
+                            <span class="inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                                <i class="fas fa-bolt mr-1"></i>
+                                Disponível
+                            </span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-md flex items-center">
+                                <i class="fas fa-star mr-1"></i>
+                                ${mission.xp || 0}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                        ${mission.descricao || mission.description || 'Sem descrição'}
+                    </p>
+
+                    <!-- Divisor -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 mb-4"></div>
+
+                    <!-- Metadados -->
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-xs font-medium">
+                                <i class="fas fa-users mr-1"></i>
+                                ${mission.targetClass || 'Geral'}
+                            </span>
+                            ${mission.turma ? `
+                                <span class="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-xs font-medium">
+                                    <i class="fas fa-graduation-cap mr-1"></i>
+                                    ${mission.turma}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>
-                <p class="text-gray-600 mb-4">${mission.descricao || mission.description || 'Sem descrição'}</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-users mr-1"></i> ${mission.targetClass || 'Geral'}
-                    </span>
-                    ${mission.turma ? `
-                        <span class="text-sm text-gray-500">
-                            <i class="fas fa-classroom mr-1"></i> ${mission.turma}
-                        </span>
-                    ` : ''}
-                </div>
+
             `;
             availableList.appendChild(card);
         });
     } else if (completedMissions.length === 0) {
         missionsList.innerHTML = `
-            <div class="text-center py-12">
-                <i class="fas fa-scroll text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-500">Nenhuma missão disponível no momento.</p>
+            <div class="text-center py-16 px-4">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full mb-6">
+                    <i class="fas fa-scroll text-gray-400 dark:text-gray-600 text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    Nenhuma missão disponível
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                    Aguarde! Seu mestre em breve publicará novas missões para você conquistar.
+                </p>
             </div>
         `;
     }

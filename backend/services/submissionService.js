@@ -173,6 +173,10 @@ class SubmissionService {
             if (filters.pending !== undefined) {
                 q = query(q, where('pending', '==', filters.pending));
             }
+            // NOVO: Filtro por masterUsername
+            if (filters.masterUsername) {
+                q = query(q, where('masterUsername', '==', filters.masterUsername));
+            }
 
             const querySnapshot = await getDocs(q);
             const submissions = [];
@@ -181,7 +185,7 @@ class SubmissionService {
                 submissions.push({ id: doc.id, ...doc.data() });
             });
 
-            console.log(`📋 ${submissions.length} submissões encontradas`);
+            console.log(`📋 ${submissions.length} submissões encontradas (filtros: ${JSON.stringify(filters)})`);
             return submissions;
         } catch (error) {
             console.error('❌ Erro ao listar submissões:', error);

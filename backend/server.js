@@ -27,7 +27,9 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+// limite de payload para upload de arquivos
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {

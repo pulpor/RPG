@@ -5,20 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Painel do Estudante - Sistema RPG</title>
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS via CDN (temporário) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: "#4338ca",
-              secondary: "#6366f1",
-            },
-          },
-        },
-      };
-    </script>
 
     <!-- Font Awesome - versão 5 estável -->
     <link
@@ -271,10 +259,7 @@
               </div>
 
               <!-- Missions Grid -->
-              <div
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                id="missions"
-              >
+              <div class="space-y-8" id="missions">
                 <!-- Loading placeholder -->
                 <div class="col-span-full text-center py-12">
                   <div
