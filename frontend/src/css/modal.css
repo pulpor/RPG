@@ -49,6 +49,25 @@ html:not([data-theme="dark"]) .feedback-modal-body strong {
   color: #1a202c !important;
 }
 
+/* Garantir que os textos no modo escuro sejam legíveis */
+html[data-theme="dark"] .feedback-modal-body h1,
+html[data-theme="dark"] .feedback-modal-body h2,
+html[data-theme="dark"] .feedback-modal-body h3,
+html[data-theme="dark"] .feedback-modal-body h4,
+html[data-theme="dark"] .feedback-modal-body strong,
+html[data-theme="dark"] .feedback-modal-body p,
+html[data-theme="dark"] .feedback-modal-body li,
+html[data-theme="dark"] .feedback-modal-body span {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .feedback-modal-content pre,
+html[data-theme="dark"] .feedback-modal-content code {
+  background-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+  border-color: #4a5568 !important;
+}
+
 html:not([data-theme="dark"]) .feedback-modal-body p,
 html:not([data-theme="dark"]) .feedback-modal-body li,
 html:not([data-theme="dark"]) .feedback-modal-body span {

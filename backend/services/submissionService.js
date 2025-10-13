@@ -68,6 +68,36 @@ class SubmissionService {
     }
 
     /**
+     * Criar nova submissão com arquivos locais (sem Firebase Storage)
+     * @param {Object} submissionData - Dados da submissão (já inclui fileUrls)
+     * @returns {Promise<Object>} - Submissão criada
+     */
+    async createSubmissionLocal(submissionData) {
+        try {
+            const submissionDoc = doc(this.submissionsRef);
+            const submissionId = submissionDoc.id;
+
+            const newSubmission = {
+                ...submissionData,
+                id: submissionId,
+                status: submissionData.status || 'pending',
+                pending: submissionData.pending ?? true,
+                submittedAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+
+            await setDoc(submissionDoc, newSubmission);
+            console.log(`✅ Submissão local criada: ${submissionId}`);
+
+            return { ...newSubmission, id: submissionId };
+        } catch (error) {
+            console.error('❌ Erro ao criar submissão local:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Upload de arquivo para Firebase Storage
      * @param {Object} file - Arquivo (multer file object)
      * @param {Object} submissionData - Dados da submissão (para organização)
@@ -76,15 +106,33 @@ class SubmissionService {
      */
     async uploadFile(file, submissionData, submissionId) {
         try {
+            console.log('🔄 [Firebase] Iniciando upload de arquivo:', file.originalname || 'sem nome');
+
+            // Verificar submissionData e dados essenciais
+            if (!submissionData) {
+                throw new Error('Dados da submissão ausentes');
+            }
+
             const { masterUsername, userId, username } = submissionData;
+
+            // Verificar valores obrigatórios
+            if (!masterUsername) {
+                console.warn('⚠️ [Firebase] masterUsername não definido, usando "desconhecido"');
+                submissionData.masterUsername = 'desconhecido';
+            }
+
+            if (!userId) {
+                throw new Error('ID do usuário ausente');
+            }
 
             // Determinar nome do arquivo
             const fileName = file.originalname || file.name || `file_${Date.now()}`;
-            const fileExtension = fileName.split('.').pop();
+            console.log('🔄 [Firebase] Nome do arquivo:', fileName);
             const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
 
             // Criar caminho no Storage: submissions/{masterUsername}/{userId}/{submissionId}/{filename}
-            const storagePath = `submissions/${masterUsername}/${userId}/${submissionId}/${sanitizedFileName}`;
+            const storagePath = `submissions/${submissionData.masterUsername}/${userId}/${submissionId}/${sanitizedFileName}`;
+            console.log('🔄 [Firebase] Caminho no Storage:', storagePath);
             const storageRef = ref(storage, storagePath);
 
             // Preparar metadados
@@ -92,8 +140,8 @@ class SubmissionService {
                 contentType: file.mimetype || 'application/octet-stream',
                 customMetadata: {
                     userId,
-                    username,
-                    masterUsername,
+                    username: username || 'desconhecido',
+                    masterUsername: submissionData.masterUsername,
                     submissionId,
                     originalName: fileName,
                     uploadedAt: new Date().toISOString()
@@ -102,21 +150,36 @@ class SubmissionService {
 
             // Fazer upload do arquivo
             let fileBuffer;
+            console.log('🔄 [Firebase] Preparando buffer do arquivo...');
+
             if (file.buffer) {
+                console.log('🔄 [Firebase] Usando buffer direto');
                 fileBuffer = file.buffer;
             } else if (file.path) {
-                const fs = require('fs');
-                fileBuffer = fs.readFileSync(file.path);
+                console.log('🔄 [Firebase] Lendo arquivo do disco:', file.path);
+                const fs = require('fs').promises;
+                try {
+                    fileBuffer = await fs.readFile(file.path);
+                } catch (fsErr) {
+                    console.error('❌ [Firebase] Erro ao ler arquivo do disco:', fsErr);
+                    throw new Error(`Erro ao ler arquivo: ${fsErr.message}`);
+                }
             } else {
-                throw new Error('Formato de arquivo inválido');
+                throw new Error('Formato de arquivo inválido (sem buffer ou path)');
             }
 
+            if (!fileBuffer || fileBuffer.length === 0) {
+                throw new Error('Arquivo vazio ou inválido');
+            }
+
+            console.log('🔄 [Firebase] Enviando para Firebase Storage...');
             await uploadBytes(storageRef, fileBuffer, metadata);
+            console.log('✅ [Firebase] Upload concluído para Storage');
 
             // Obter URL de download
+            console.log('🔄 [Firebase] Obtendo URL de download...');
             const downloadURL = await getDownloadURL(storageRef);
-
-            console.log(`✅ Arquivo enviado para Firebase Storage: ${sanitizedFileName}`);
+            console.log('✅ [Firebase] URL de download obtida:', downloadURL.substring(0, 50) + '...');
 
             return {
                 url: downloadURL,

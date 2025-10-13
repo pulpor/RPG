@@ -21,6 +21,32 @@ const AppState = {
     }
 };
 
+// Funções de utilidade para a interface
+
+// Converter Timestamp do Firestore para Date válida
+function parseFirebaseDate(timestamp) {
+    if (!timestamp) return new Date();
+
+    // Se já é uma data válida
+    if (timestamp instanceof Date) return timestamp;
+
+    // Se é string ISO
+    if (typeof timestamp === 'string') return new Date(timestamp);
+
+    // Se é Timestamp do Firestore (tem seconds e nanoseconds)
+    if (timestamp.seconds !== undefined) {
+        return new Date(timestamp.seconds * 1000);
+    }
+
+    // Se é objeto com _seconds (formato alternativo do Firestore)
+    if (timestamp._seconds !== undefined) {
+        return new Date(timestamp._seconds * 1000);
+    }
+
+    // Fallback: tentar converter diretamente
+    return new Date(timestamp);
+}
+
 // Sistema de notificações Toast
 const Toast = {
     container: null,
@@ -454,24 +480,196 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
 
     missionsList.innerHTML = '';
 
-    // Filtrar missões disponíveis: remover missões que já foram submetidas (pending ou approved)
-    // Apenas mostrar missões sem submissão ou com submissão rejeitada
-    const submittedMissionIds = new Set(
-        submissions
-            .filter(s => !s.isPenaltyReward && (s.status === 'pending' || s.status === 'approved'))
-            .map(s => s.missionId)
-    );
+    // PASSO 1: Obter IDs de todas as submissões (pending e approved)
+    // Missões com estas IDs não devem aparecer na lista de disponíveis
+    const submittedMissionIds = new Set();
+    submissions.forEach(s => {
+        // Se não for penalidade/recompensa e for pendente ou aprovada, adiciona à lista de IDs submetidas
+        if (!s.isPenaltyReward && (s.status === 'pending' || s.status === 'approved')) {
+            submittedMissionIds.add(s.missionId);
+        }
+    });
 
+    console.log('IDs de missões submetidas:', Array.from(submittedMissionIds));
+
+    // PASSO 2: Obter IDs específicas para pendentes
+    const pendingMissionIds = new Set();
+    submissions.forEach(s => {
+        // Se não for penalidade/recompensa e for pendente, adiciona à lista de pendentes
+        if (!s.isPenaltyReward && s.status === 'pending') {
+            pendingMissionIds.add(s.missionId);
+        }
+    });
+
+    console.log('IDs de missões pendentes:', Array.from(pendingMissionIds));
+
+    // PASSO 3: Obter IDs específicas para aprovadas/concluídas
+    const completedMissionIds = new Set();
+    submissions.forEach(s => {
+        // Se não for penalidade/recompensa e for aprovada, adiciona à lista de concluídas
+        if (!s.isPenaltyReward && s.status === 'approved') {
+            completedMissionIds.add(s.missionId);
+        }
+    });
+
+    console.log('IDs de missões concluídas:', Array.from(completedMissionIds));
+
+    // PASSO 4: Garantir que as missões apareçam apenas em uma categoria
+    // Uma missão está disponível somente se não estiver em nenhuma outra categoria
     const availableMissions = missions.filter(mission => !submittedMissionIds.has(mission.id));
+
+    // Buscar as missões com submissões pendentes para mostrar na seção de pendentes
+    // IMPORTANTE: Combinamos as informações de missões com suas submissões correspondentes
+    const pendingMissions = missions.filter(mission => pendingMissionIds.has(mission.id));
+
+    // Adicionar detalhes das submissões pendentes às missões pendentes
+    pendingMissions.forEach(mission => {
+        // Encontrar a submissão correspondente
+        const submission = submissions.find(s => s.missionId === mission.id && s.status === 'pending');
+        if (submission) {
+            mission.submission = submission; // Anexar a submissão à missão para fácil acesso
+        }
+    });
+
+    console.log('Missões disponíveis:', availableMissions.length);
+    console.log('Missões pendentes:', pendingMissions.length);
+    console.log('Missões concluídas:', completedMissions.length);
+
+    // Contadores para atualizar os números na interface
+    const totalMissions = missions.length;
+    const completedCount = completedMissions.length;
+    const pendingCount = pendingMissions.length;
+
+    // Atualizar contadores na interface
+    document.getElementById('total-missions').textContent = totalMissions;
+    document.getElementById('completed-missions').textContent = completedCount;
+    document.getElementById('pending-missions').textContent = pendingCount;
+
+    // Criar os botões para alternar entre as seções
+    const sectionButtons = document.createElement('div');
+    sectionButtons.className = 'flex flex-wrap gap-4 mb-6';
+    sectionButtons.innerHTML = `
+        <button id="show-available-missions" class="section-button bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-blue-700 active">
+            <i class="fas fa-scroll mr-2"></i>
+            <span>Missões Disponíveis</span>
+            <span class="bg-white text-blue-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${availableMissions.length}</span>
+        </button>
+        
+        <button id="show-pending-missions" class="section-button bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-yellow-700">
+            <i class="fas fa-clock mr-2"></i>
+            <span>Missões Pendentes</span>
+            <span class="bg-white text-yellow-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${pendingMissions.length}</span>
+        </button>
+        
+        <button id="show-completed-missions" class="section-button bg-green-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-green-700">
+            <i class="fas fa-trophy mr-2"></i>
+            <span>Missões Concluídas</span>
+            <span class="bg-white text-green-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${completedMissions.length}</span>
+        </button>
+    `;
+    missionsList.appendChild(sectionButtons);
+
+    // Container para todas as seções de missões (inicialmente só mostra disponíveis)
+    const missionsContainer = document.createElement('div');
+    missionsContainer.className = 'missions-container';
+    missionsList.appendChild(missionsContainer);
+
+    // Adicionar seção de missões pendentes (inicialmente oculta)
+    const pendingSection = document.createElement('div');
+    pendingSection.id = 'pending-missions-section';
+    pendingSection.className = 'missions-section hidden';
+    pendingSection.innerHTML = `
+        <div class="mb-6 flex items-center justify-between">
+            <h3 class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mr-3 shadow-lg">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                Missões Pendentes de Avaliação
+            </h3>
+            <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-full font-bold text-sm">
+                ${pendingMissions.length}
+            </span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pending-missions-list"></div>
+    `;
+    missionsContainer.appendChild(pendingSection);
+
+    // Preencher a seção de pendentes com as missões
+    if (pendingMissions.length > 0) {
+        const pendingList = document.getElementById('pending-missions-list');
+        pendingMissions.forEach(mission => {
+            // Encontrar a submissão correspondente a esta missão
+            const submission = submissions.find(s => s.missionId === mission.id && s.status === 'pending');
+
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border-l-4 border-yellow-500';
+            card.innerHTML = `
+                <div class="p-6">
+                    <!-- Header com título e XP -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1 pr-2">
+                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-1 line-clamp-2">
+                                ${mission.titulo || mission.title || 'Missão sem título'}
+                            </h4>
+                            <span class="inline-flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-semibold">
+                                <i class="fas fa-hourglass-half mr-1"></i>
+                                Aguardando avaliação
+                            </span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-md flex items-center">
+                                <i class="fas fa-star mr-1"></i>
+                                ${mission.xp || 0}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submissão -->
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        <i class="fas fa-paper-plane mr-1"></i>
+                        Enviado em: ${parseFirebaseDate(submission?.submittedAt).toLocaleString('pt-BR')}
+                    </p>
+                    
+                    <!-- Arquivos enviados -->
+                    ${submission?.fileUrls && submission.fileUrls.length ? `
+                        <div class="mt-3">
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Arquivos enviados:</p>
+                            <div class="space-y-1">
+                                ${submission.fileUrls.map(file => `
+                                    <div class="flex items-center text-xs text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-file-code mr-2"></i>
+                                        <span class="truncate max-w-[200px]">${file.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Divisor -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+
+                    <!-- Status -->
+                    <div class="flex justify-between items-center">
+                        <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                            <i class="fas fa-clock mr-1"></i>
+                            Aguardando mestre
+                        </span>
+                    </div>
+                </div>
+            `;
+            pendingList.appendChild(card);
+        });
+    }
 
     // Seção de missões concluídas
     if (completedMissions.length > 0) {
         const completedSection = document.createElement('div');
-        completedSection.className = 'mb-8 col-span-full';
+        completedSection.id = 'completed-missions-section';
+        completedSection.className = 'missions-section hidden mb-8 col-span-full';
         completedSection.innerHTML = `
             <div class="mb-6 flex items-center justify-between">
                 <h3 class="text-2xl font-bold text-green-700 dark:text-green-400 flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mr-3 shadow-lg">
+                    <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3 shadow-lg">
                         <i class="fas fa-trophy text-white"></i>
                     </div>
                     Missões Concluídas
@@ -542,7 +740,8 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     // Seção de missões disponíveis
     if (availableMissions.length > 0) {
         const availableSection = document.createElement('div');
-        availableSection.className = 'col-span-full';
+        availableSection.id = 'available-missions-section';
+        availableSection.className = 'missions-section col-span-full'; // Inicialmente visível
         availableSection.innerHTML = `
             <div class="mb-6 flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-blue-500 dark:text-blue-400 flex items-center">
@@ -563,6 +762,26 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         availableMissions.forEach(mission => {
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-l-4 border-blue-500 transform hover:-translate-y-1 cursor-pointer';
+            card.dataset.missionId = mission.id;
+            card.addEventListener('click', function () {
+                // Preencher o select de missão no formulário de submissão
+                const missionSelect = document.getElementById('mission-select');
+                if (missionSelect) {
+                    missionSelect.value = mission.id;
+                    // Disparar o evento change para atualizar os detalhes da missão
+                    missionSelect.dispatchEvent(new Event('change'));
+                }
+
+                // Rolar até o formulário de submissão
+                document.querySelector('#submit-code-btn').scrollIntoView({ behavior: 'smooth' });
+
+                // Destacar o formulário por um momento
+                const submitSection = document.querySelector('#submit-code-btn').closest('.bg-white');
+                submitSection.classList.add('highlight-pulse');
+                setTimeout(() => {
+                    submitSection.classList.remove('highlight-pulse');
+                }, 2000);
+            });
             card.innerHTML = `
                 <div class="p-6">
                     <!-- Header com título e XP -->
@@ -628,6 +847,72 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         `;
     }
 
+    // Adicionar função para mostrar apenas uma seção de missão por vez
+    function showMissionSection(sectionId) {
+        // Ocultar todas as seções
+        document.querySelectorAll('.missions-section').forEach(section => {
+            section.classList.add('hidden');
+        });
+
+        // Mostrar apenas a seção selecionada
+        const selectedSection = document.getElementById(sectionId);
+        if (selectedSection) {
+            selectedSection.classList.remove('hidden');
+        }
+
+        // Atualizar estilos dos botões (remover classe 'active' de todos)
+        document.querySelectorAll('.section-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.remove('ring-2', 'ring-offset-2');
+        });
+
+        // Adicionar classe 'active' ao botão selecionado
+        let buttonId;
+        switch (sectionId) {
+            case 'available-missions-section':
+                buttonId = 'show-available-missions';
+                break;
+            case 'pending-missions-section':
+                buttonId = 'show-pending-missions';
+                break;
+            case 'completed-missions-section':
+                buttonId = 'show-completed-missions';
+                break;
+        }
+
+        const selectedButton = document.getElementById(buttonId);
+        if (selectedButton) {
+            selectedButton.classList.add('active');
+            selectedButton.classList.add('ring-2', 'ring-offset-2');
+        }
+    }
+
+    // Adicionar manipuladores de eventos aos botões
+    const availableButton = document.getElementById('show-available-missions');
+    const pendingButton = document.getElementById('show-pending-missions');
+    const completedButton = document.getElementById('show-completed-missions');
+
+    if (availableButton) {
+        availableButton.addEventListener('click', () => {
+            showMissionSection('available-missions-section');
+        });
+    }
+
+    if (pendingButton) {
+        pendingButton.addEventListener('click', () => {
+            showMissionSection('pending-missions-section');
+        });
+    }
+
+    if (completedButton) {
+        completedButton.addEventListener('click', () => {
+            showMissionSection('completed-missions-section');
+        });
+    }
+
+    // Inicialmente, mostrar a seção de missões disponíveis
+    showMissionSection('available-missions-section');
+
     updateMissionCounters(availableMissions, completedMissions, submissions);
     updateMissionSelect(availableMissions);
 }
@@ -677,16 +962,28 @@ function setupMissionSubmission() {
 
         const formData = new FormData();
         formData.append('missionId', selectedMissionId);
-        uploadedFiles.forEach(file => {
-            formData.append('code', file);
-        });
+        // Para diagnóstico: enviar apenas o primeiro arquivo
+        if (uploadedFiles.length > 0) {
+            console.log('🔄 Enviando arquivo para diagnóstico:', uploadedFiles[0].name);
+            formData.append('code', uploadedFiles[0]);
+        } else {
+            console.log('⚠️ Nenhum arquivo para enviar');
+        }
 
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
 
         try {
+            console.log('🔄 Iniciando upload de arquivo(s)...');
+            console.log('🔄 Número de arquivos:', uploadedFiles.length);
+            console.log('🔄 Missão ID:', selectedMissionId);
+
             // 1. Enviar submissão para o backend
             const token = localStorage.getItem('token');
+
+            // Mostrar progresso ao usuário
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando (0%)...';
+
             const response = await fetch(`http://localhost:3000/submissoes/submit`, {
                 method: 'POST',
                 body: formData,
@@ -696,12 +993,29 @@ function setupMissionSubmission() {
                 }
             });
 
+            console.log('✅ Resposta recebida do servidor:', response.status);
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Erro ao enviar submissão');
+                let errorMessage = 'Erro desconhecido no servidor';
+                try {
+                    const error = await response.json();
+                    console.error('❌ Erro na resposta:', error);
+                    errorMessage = error.error || error.details || error.message || 'Falha no servidor';
+                    throw new Error(errorMessage);
+                } catch (parseError) {
+                    console.error('❌ Erro ao processar resposta de erro:', parseError);
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                }
             }
 
-            await response.json();
+            let result;
+            try {
+                result = await response.json();
+                console.log('✅ Upload concluído com sucesso:', result);
+            } catch (jsonError) {
+                console.error('❌ Erro ao processar resposta JSON:', jsonError);
+                // Continuar mesmo com erro de parsing, provavelmente funcionou
+            }
 
             Toast.show('Missão enviada com sucesso! Status: Pendente - aguardando aprovação do mestre.', 'success');
 
@@ -729,7 +1043,7 @@ function setupMissionSubmission() {
                 description: `Submissão para a missão: ${selectedMissionText}`
             });
 
-            // 3. Limpar formulário
+            // 3. Limpar o formulário
             missionSelect.value = '';
             codeUpload.value = '';
 
@@ -752,14 +1066,34 @@ function setupMissionSubmission() {
 
             // Atualizar estado global e interface com todas as informações
             AppState.set('submissions', submissions);
+            AppState.set('missions', missions);
+            AppState.set('completedMissions', completedMissions);
+
+            // Importante: atualizar a interface após uma submissão
             updateMissionsInterface(missions, completedMissions, submissions);
 
-            // Mostrar toast sobre onde encontrar a submissão pendente
+            // Mostrar a seção de missões pendentes após uma submissão
             setTimeout(() => {
-                Toast.show('📋 Sua submissão está pendente! Verifique o "Histórico de Submissões" para acompanhar o status.', 'info');
-            }, 2000);
+                const pendingButton = document.getElementById('show-pending-missions');
+                if (pendingButton) {
+                    pendingButton.click(); // Ativa automaticamente a visualização de missões pendentes
+                }
+
+                // Mostrar toast sobre onde encontrar a submissão pendente
+                Toast.show('📋 Sua submissão está pendente! Agora você pode vê-la na seção "Missões Pendentes".', 'info');
+            }, 1000);
         } catch (error) {
-            Toast.show('Erro ao enviar missão. Tente novamente.', 'error');
+            console.error('❌ Erro durante o processo de submissão:', error);
+            let mensagem = error.message || 'Erro desconhecido';
+
+            // Fornecer mensagens mais descritivas para erros comuns
+            if (mensagem.includes('NetworkError') || mensagem.includes('Failed to fetch')) {
+                mensagem = 'Erro de conexão com o servidor. Verifique se o servidor está rodando.';
+            } else if (mensagem.includes('413') || mensagem.includes('too large')) {
+                mensagem = 'O arquivo é muito grande. Limite máximo: 50MB.';
+            }
+
+            Toast.show('Erro ao enviar missão: ' + mensagem, 'error');
         } finally {
             submitButton.disabled = false;
             submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Código';
@@ -977,11 +1311,17 @@ function renderSubmissionCard(submission, container) {
  */
 async function generateAutomaticFeedback(files, missionContext) {
     try {
+        console.log('🔄 Gerando feedback automático...');
+        console.log('   - Arquivos:', files);
+        console.log('   - Contexto da missão:', missionContext);
+
         // Mostrar toast informativo
         Toast.show('🤖 Gerando feedback automático com IA...', 'info');
 
         // Gerar feedback com Gemini
         const feedbackData = await gemini.analyzeSubmission(files, missionContext);
+
+        console.log('✅ Feedback recebido:', feedbackData);
 
         // Preparar informações da submissão para o modal
         const submissionInfo = {
@@ -989,6 +1329,8 @@ async function generateAutomaticFeedback(files, missionContext) {
             files: files.map(file => ({ name: file.name, size: file.size })),
             timestamp: new Date().toISOString()
         };
+
+        console.log('📋 Informações da submissão:', submissionInfo);
 
         // Exibir modal com o feedback
         feedbackModal.show(feedbackData, submissionInfo);
@@ -1004,6 +1346,7 @@ async function generateAutomaticFeedback(files, missionContext) {
         }
 
     } catch (error) {
+        console.error('❌ Erro ao gerar feedback:', error);
         Toast.show('Erro ao gerar feedback automático. Tente novamente.', 'error');
     }
 }

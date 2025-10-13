@@ -5,55 +5,95 @@ const { autenticar, ehMestre } = require('../middleware/auth');
 const { upload } = require('../utils/armazenamentoArquivos');
 
 router.post('/submit', autenticar, upload, async (req, res) => {
+  console.log('🔵 [UPLOAD] Iniciando processamento de submissão...');
   try {
+    console.log('🔵 [UPLOAD] Body:', req.body);
+    console.log('🔵 [UPLOAD] File:', req.file ? {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path
+    } : 'Nenhum arquivo');
+    console.log('🔵 [UPLOAD] User:', req.user ? {
+      userId: req.user.userId,
+      username: req.user.username,
+      role: req.user.role
+    } : 'Usuário não autenticado');
+
     const { missionId } = req.body;
     const userId = req.user.userId;
-    console.log('Processando submissão:', { missionId, userId, files: req.files, body: req.body });
+    const username = req.user.username;
 
-    // Buscar informações do usuário e missão usando serviços Firebase
-    const userService = require('../services/userService');
+    if (!missionId) {
+      return res.status(400).json({ error: 'ID da missão não fornecido' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo foi enviado' });
+    }
+
+    console.log('🔵 [UPLOAD] MissionId:', missionId);
+    console.log('🔵 [UPLOAD] UserId:', userId);
+
+    // Importar os serviços necessários
+    const submissionService = require('../services/submissionService');
     const missionService = require('../services/missionService');
+    const userService = require('../services/userService');
 
-    // Obter usuário
+    // Buscar informações da missão
+    const mission = await missionService.getMissionById(missionId);
+    if (!mission) {
+      return res.status(404).json({ error: 'Missão não encontrada' });
+    }
+
+    // Buscar informações do usuário
     const user = await userService.getUserById(userId.toString());
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    // Obter missão
-    const mission = await missionService.getMissionById(missionId.toString());
-    if (!mission) {
-      return res.status(404).json({ error: 'Missão não encontrada' });
-    }
-
-    // Preparar dados da submissão
+    // Criar dados da submissão para Firebase Storage
     const submissionData = {
       userId: userId.toString(),
-      username: user.username,
-      masterUsername: user.masterUsername,
-      missionId: missionId.toString(),
-      submittedAt: new Date().toISOString(),
-      pending: true,
-      status: 'pending',
+      username: user.username || username || 'Desconhecido', // Pegar do user, depois do token, ou usar padrão
+      missionId: missionId,
       missionTitle: mission.titulo || mission.title || 'Missão sem título',
-      xp: mission.xp,
-      completed: false
+      masterUsername: mission.createdBy || user.masterUsername || 'desconhecido',
+      status: 'pending',
+      pending: true
     };
 
-    // Usar o serviço de submissões para Firebase
-    const submissionService = require('../services/submissionService');
-    const files = req.files && req.files.code ? req.files.code : [];
-    const result = await submissionService.createSubmission(submissionData, files);
+    console.log('🔵 [UPLOAD] Dados da submissão:', submissionData);
 
-    console.log('✅ Submissão enviada com sucesso:', result.id);
-    res.json({ message: 'Submissão enviada com sucesso', id: result.id });
+    // Criar a submissão no Firestore E fazer upload para Firebase Storage
+    const submission = await submissionService.createSubmission(submissionData, [req.file]);
+
+    console.log('✅ [UPLOAD] Submissão criada com sucesso:', submission.id);
+
+    res.json({
+      message: 'Submissão enviada com sucesso para Firebase Storage',
+      submission: submission
+    });
+
   } catch (err) {
-    console.error('❌ Erro ao processar submissão:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+    console.error('❌ [UPLOAD] Erro no processamento da submissão:', err);
+    console.error('❌ [UPLOAD] Stack:', err.stack);
 
-router.get('/my-submissions', autenticar, async (req, res) => {
+    // Verificar se é erro de permissão do Firebase Storage
+    if (err.code === 'storage/unauthorized') {
+      return res.status(403).json({
+        error: 'Erro de permissão no Firebase Storage',
+        details: 'Configure as regras de segurança no Firebase Console: Storage > Rules',
+        suggestion: 'Regras recomendadas: allow read, write: if request.auth != null;'
+      });
+    }
+
+    res.status(500).json({
+      error: 'Erro ao processar submissão',
+      details: err.message
+    });
+  }
+}); router.get('/my-submissions', autenticar, async (req, res) => {
   const userId = req.user.userId;
   console.log('[DEBUG] Buscando submissões do usuário:', userId);
 

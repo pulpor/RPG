@@ -3,6 +3,24 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Efeito de destaque para elementos */
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.2);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.highlight-pulse {
+  animation: highlightPulse 1.5s ease-out 2;
+  box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.2);
+}
+
 /* Layout base */
 .page-container {
   padding-top: 160px !important;
