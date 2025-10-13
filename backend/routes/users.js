@@ -8,6 +8,7 @@ const router = express.Router();
 // Usar serviços Firebase
 const userService = require('../services/userService');
 const submissionService = require('../services/submissionService');
+const turmaService = require('../services/turmaService');
 
 router.get('/students', autenticar, ehMestre, async (req, res) => {
   try {
@@ -200,130 +201,180 @@ router.get('/pending-users', autenticar, ehMestre, async (req, res) => {
   }
 });
 
-// Rotas para gerenciar turmas (persistidas em data/turmas.json)
+// Rotas para gerenciar turmas (usando Firebase Firestore)
 router.get('/turmas', autenticar, ehMestre, async (req, res) => {
   try {
-    const allTurmas = JSON.parse(await fs.readFile(caminhoTurmas, 'utf8')) || {};
-    const myTurmas = allTurmas[req.user.userId] || [];
-    res.json({ turmas: myTurmas });
+    console.log('[TURMAS] GET /turmas - Master:', req.user.userId);
+
+    // Buscar turmas do master no Firebase
+    const turmas = await turmaService.getTurmasByMaster(req.user.userId);
+
+    console.log('[TURMAS] Turmas encontradas:', turmas.length);
+
+    // Retornar apenas os nomes das turmas (para compatibilidade com frontend)
+    const turmasNomes = turmas.map(t => t.nome || t.name);
+
+    res.json({ turmas: turmasNomes });
   } catch (err) {
-    console.error('Erro ao ler turmas:', err);
-    res.status(500).json({ error: 'Erro ao ler turmas' });
+    console.error('[TURMAS] Erro ao ler turmas:', err);
+    res.status(500).json({ error: 'Erro ao ler turmas', details: err.message });
   }
 });
 
 router.post('/turmas', autenticar, ehMestre, async (req, res) => {
   try {
     const { nome } = req.body;
-    if (!nome || !nome.trim()) return res.status(400).json({ error: 'Nome inválido' });
-    const allTurmas = JSON.parse(await fs.readFile(caminhoTurmas, 'utf8')) || {};
-    const userId = req.user.userId;
-    const myTurmas = allTurmas[userId] || [];
-    if (!myTurmas.includes(nome)) myTurmas.push(nome);
-    allTurmas[userId] = myTurmas;
-    await fs.writeFile(caminhoTurmas, JSON.stringify(allTurmas, null, 2));
-    res.json({ turmas: myTurmas });
+
+    console.log('[TURMAS] POST /turmas - Criando turma:', nome, 'Master:', req.user.userId);
+
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ error: 'Nome inválido' });
+    }
+
+    // Criar turma no Firebase
+    const novaTurma = await turmaService.createTurma({
+      nome: nome.trim(),
+      masterId: req.user.userId,
+      createdAt: new Date().toISOString()
+    });
+
+    console.log('[TURMAS] Turma criada:', novaTurma.id);
+
+    // Buscar todas as turmas do master
+    const turmas = await turmaService.getTurmasByMaster(req.user.userId);
+    const turmasNomes = turmas.map(t => t.nome || t.name);
+
+    res.json({ turmas: turmasNomes });
   } catch (err) {
-    console.error('Erro ao salvar turma:', err);
-    res.status(500).json({ error: 'Erro ao salvar turma' });
+    console.error('[TURMAS] Erro ao salvar turma:', err);
+    res.status(500).json({ error: 'Erro ao salvar turma', details: err.message });
   }
 });
 
 router.delete('/turmas', autenticar, ehMestre, async (req, res) => {
   try {
     const { nome } = req.body;
-    if (!nome) return res.status(400).json({ error: 'Nome inválido' });
-    const allTurmas = JSON.parse(await fs.readFile(caminhoTurmas, 'utf8')) || {};
-    const userId = req.user.userId;
-    const myTurmas = (allTurmas[userId] || []).filter(t => t !== nome);
-    allTurmas[userId] = myTurmas;
-    await fs.writeFile(caminhoTurmas, JSON.stringify(allTurmas, null, 2));
-    res.json({ turmas: myTurmas });
+
+    console.log('[TURMAS] DELETE /turmas - Deletando turma:', nome, 'Master:', req.user.userId);
+
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome inválido' });
+    }
+
+    // Buscar a turma pelo nome e masterId
+    const turmas = await turmaService.getTurmasByMaster(req.user.userId);
+    const turmaParaDeletar = turmas.find(t => (t.nome || t.name) === nome);
+
+    if (turmaParaDeletar) {
+      await turmaService.deleteTurma(turmaParaDeletar.id);
+      console.log('[TURMAS] Turma deletada:', turmaParaDeletar.id);
+    }
+
+    // Buscar turmas atualizadas
+    const turmasAtualizadas = await turmaService.getTurmasByMaster(req.user.userId);
+    const turmasNomes = turmasAtualizadas.map(t => t.nome || t.name);
+
+    res.json({ turmas: turmasNomes });
   } catch (err) {
-    console.error('Erro ao deletar turma:', err);
-    res.status(500).json({ error: 'Erro ao deletar turma' });
+    console.error('[TURMAS] Erro ao deletar turma:', err);
+    res.status(500).json({ error: 'Erro ao deletar turma', details: err.message });
   }
 });
 
 router.post('/approve-user', autenticar, ehMestre, async (req, res) => {
-  const { userId, turma } = req.body;
-
-  // Validação: turma é obrigatória
-  if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
-    return res.status(400).json({
-      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
-    });
-  }
-
-  const user = users.find(u => u.id === parseInt(userId));
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
-  }
-
-  // Obter o master logado
-  const master = users.find(u => u.id === req.user.userId);
-  if (!master) {
-    return res.status(404).json({ error: 'Master não encontrado' });
-  }
-
-  // Atribuir turma
-  user.turma = turma.trim();
-  user.assignedTurma = turma.trim();
-
-  // Garantir que o usuário tenha o masterUsername correto
-  user.masterUsername = master.username;
-  user.pending = false;
-
-  console.log('[DEBUG BACKEND] Usuário aprovado:', user.username, 'Master:', master.username, 'Turma:', turma);
-
   try {
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-    res.json({ user: { ...user, password: undefined } });
+    const { userId, turma } = req.body;
+
+    console.log('[APPROVE-USER] Iniciando aprovação:', { userId, turma });
+
+    // Validação: userId é obrigatório
+    if (!userId) {
+      return res.status(400).json({ error: 'userId é obrigatório' });
+    }
+
+    // Validação: turma é obrigatória
+    if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
+      return res.status(400).json({
+        error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
+      });
+    }
+
+    // Buscar usuário no Firebase
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Obter o master logado
+    const master = await userService.getUserById(req.user.userId);
+    if (!master) {
+      return res.status(404).json({ error: 'Master não encontrado' });
+    }
+
+    // Atualizar usuário no Firebase
+    await userService.updateUser(userId, {
+      turma: turma.trim(),
+      assignedTurma: turma.trim(),
+      masterUsername: master.username,
+      pending: false
+    });
+
+    console.log('[APPROVE-USER] ✅ Usuário aprovado:', user.username, 'Master:', master.username, 'Turma:', turma);
+
+    // Buscar usuário atualizado
+    const updatedUser = await userService.getUserById(userId);
+
+    res.json({ user: { ...updatedUser, password: undefined } });
   } catch (err) {
-    console.error('Erro ao salvar users.json:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[APPROVE-USER] ❌ Erro ao aprovar usuário:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
 
 // Rota alternativa com padrão REST
 router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
-  const userId = parseInt(req.params.id);
-  const { turma } = req.body;
-
-  // Validação: turma é obrigatória
-  if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
-    return res.status(400).json({
-      error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
-    });
-  }
-
-  const user = users.find(u => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
-  }
-
-  // Obter o master logado
-  const master = users.find(u => u.id === req.user.userId);
-  if (!master) {
-    return res.status(404).json({ error: 'Master não encontrado' });
-  }
-
-  // Atribuir turma
-  user.turma = turma.trim();
-  user.assignedTurma = turma.trim();
-
-  // Garantir que o usuário tenha o masterUsername correto
-  user.masterUsername = master.username;
-  user.pending = false;
-
-  console.log('[DEBUG BACKEND] Usuário aprovado via REST:', user.username, 'Master:', master.username, 'Turma:', turma);
-
   try {
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-    res.json({ user: { ...user, password: undefined } });
+    const userId = req.params.id; // Firebase IDs são strings
+    const { turma } = req.body;
+
+    console.log('[APPROVE/:id] Iniciando aprovação:', { userId, turma });
+
+    // Validação: turma é obrigatória
+    if (!turma || typeof turma !== 'string' || turma.trim() === '' || turma === 'Selecione uma turma') {
+      return res.status(400).json({
+        error: 'Turma é obrigatória. Não é possível aprovar usuário sem atribuir uma turma válida.'
+      });
+    }
+
+    // Buscar usuário no Firebase
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Obter o master logado
+    const master = await userService.getUserById(req.user.userId);
+    if (!master) {
+      return res.status(404).json({ error: 'Master não encontrado' });
+    }
+
+    // Atualizar usuário no Firebase
+    await userService.updateUser(userId, {
+      turma: turma.trim(),
+      assignedTurma: turma.trim(),
+      masterUsername: master.username,
+      pending: false
+    });
+
+    console.log('[APPROVE/:id] ✅ Usuário aprovado:', user.username, 'Master:', master.username, 'Turma:', turma);
+
+    // Buscar usuário atualizado
+    const updatedUser = await userService.getUserById(userId);
+
+    res.json({ user: { ...updatedUser, password: undefined } });
   } catch (err) {
-    console.error('Erro ao salvar users.json:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[APPROVE/:id] ❌ Erro ao aprovar usuário:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
 
@@ -540,8 +591,10 @@ router.post('/expel-student', autenticar, ehMestre, async (req, res) => {
 // Endpoint para trocar aluno de turma
 router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
   try {
-    const userId = parseInt(req.params.id);
+    const userId = req.params.id; // Firebase IDs são strings
     const { novaTurma } = req.body;
+
+    console.log('[CHANGE-TURMA] Iniciando troca de turma:', { userId, novaTurma });
 
     // Validação: nova turma é obrigatória
     if (!novaTurma || typeof novaTurma !== 'string' || novaTurma.trim() === '') {
@@ -550,7 +603,8 @@ router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
       });
     }
 
-    const user = users.find(u => u.id === userId);
+    // Buscar o aluno no Firebase
+    const user = await userService.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
@@ -561,7 +615,7 @@ router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
     }
 
     // Obter o master logado
-    const master = users.find(u => u.id === req.user.userId);
+    const master = await userService.getUserById(req.user.userId);
     if (!master) {
       return res.status(404).json({ error: 'Master não encontrado' });
     }
@@ -573,25 +627,24 @@ router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
 
     const turmaAnterior = user.turma || user.assignedTurma;
 
-    // Atualizar a turma do aluno
-    user.turma = novaTurma.trim();
-    user.assignedTurma = novaTurma.trim();
+    // Atualizar a turma do aluno no Firebase
+    await userService.updateUser(userId, {
+      turma: novaTurma.trim(),
+      assignedTurma: novaTurma.trim()
+    });
 
-    // Salvar as alterações
-    await fs.writeFile(caminhoUsers, JSON.stringify(users, null, 2));
-
-    console.log(`[DEBUG BACKEND] Aluno ${user.username} transferido de "${turmaAnterior}" para "${novaTurma}" pelo master ${master.username}`);
+    console.log(`[CHANGE-TURMA] ✅ Aluno ${user.username} transferido de "${turmaAnterior}" para "${novaTurma}" pelo master ${master.username}`);
 
     res.json({
       message: 'Aluno transferido com sucesso',
-      user: { ...user, password: undefined },
+      user: { ...user, turma: novaTurma.trim(), assignedTurma: novaTurma.trim(), password: undefined },
       turmaAnterior,
-      novaTurma
+      novaTurma: novaTurma.trim()
     });
 
   } catch (err) {
-    console.error('Erro ao trocar aluno de turma:', err);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[CHANGE-TURMA] ❌ Erro ao trocar aluno de turma:', err);
+    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
 

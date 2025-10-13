@@ -58,7 +58,7 @@ export function getUsersForTurma(turma) {
 // Função para carregar turmas da API
 async function loadTurmasFromAPI() {
   try {
-    const response = await window.apiRequest('/usuarios/turmas');
+    const response = await window.apiRequest('/turmas');
     if (response && response.turmas) {
       DADOS_MASTER.turmas = response.turmas;
       salvarDados();
@@ -125,7 +125,7 @@ export async function setupTurmas() {
       if (nome && !DADOS_MASTER.turmas.includes(nome)) {
         try {
           // Adicionar via API
-          await window.apiRequest('/usuarios/turmas', {
+          await window.apiRequest('/turmas', {
             method: 'POST',
             body: JSON.stringify({ nome })
           });
@@ -159,7 +159,7 @@ export async function setupTurmas() {
         const novaTurma = input.value.trim();
         try {
           // Adicionar via API
-          await window.apiRequest('/usuarios/turmas', {
+          await window.apiRequest('/turmas', {
             method: 'POST',
             body: JSON.stringify({ nome: novaTurma })
           });

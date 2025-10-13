@@ -12,6 +12,7 @@ const missoesRotas = require('./routes/missions');
 const usuariosRotas = require('./routes/users');
 const submissoesRotas = require('./routes/submissions');
 const geminiRotas = require('./routes/gemini');
+const turmasRotas = require('./routes/turmas');
 
 const app = express();
 const port = 3000;
@@ -63,6 +64,7 @@ app.use('/missoes', missoesRotas);
 app.use('/usuarios', usuariosRotas);
 app.use('/submissoes', submissoesRotas);
 app.use('/gemini', geminiRotas);
+app.use('/turmas', turmasRotas);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 console.log('[SERVER] ✅ Rotas configuradas');
 
@@ -86,8 +88,17 @@ app.use((req, res, next) => {
   res.status(404).json({ error: 'Rota não encontrada', url: req.originalUrl });
 });
 
+// Handlers de erro para evitar que o processo termine
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Iniciar servidor
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${port}`);
   console.log('📋 Rotas disponíveis:');
   console.log('   - POST /auth/login');
@@ -99,4 +110,11 @@ app.listen(port, () => {
   console.log('✅ Sistema pronto para uso!');
   console.log('🔥 Firebase Firestore: Conectado');
   console.log('🤖 Gemini 2.5-Flash: Configurado');
+});
+
+server.on('error', (err) => {
+  console.error('❌ Erro no servidor:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
+  }
 });
