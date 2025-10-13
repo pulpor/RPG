@@ -65,6 +65,7 @@ app.use('/usuarios', usuariosRotas);
 app.use('/submissoes', submissoesRotas);
 app.use('/gemini', geminiRotas);
 app.use('/turmas', turmasRotas);
+app.use('/files', require('./routes/files'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 console.log('[SERVER] ✅ Rotas configuradas');
 

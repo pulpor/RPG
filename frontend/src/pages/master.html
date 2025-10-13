@@ -88,13 +88,11 @@
       </h3>
       <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Ano</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Turma</label>
           <select id="student-year-filter"
             class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
-            <option value="all">Todos os anos</option>
-            <option value="1">1º ano - Front-end</option>
-            <option value="2">2º ano - Back-end</option>
-            <option value="3">3º ano - Mobile</option>
+            <option value="all">Todas as turmas</option>
+            <!-- Turmas serão carregadas dinamicamente -->
           </select>
         </div>
         <div>
@@ -102,12 +100,14 @@
           <select id="student-class-filter"
             class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
             <option value="all">Todas as classes</option>
-            <option value="Arqueiro do JavaScript">
-              Arqueiro do JavaScript
-            </option>
+            <option value="Arqueiro do JavaScript">Arqueiro do JavaScript</option>
             <option value="Cafeicultor do Java">Cafeicultor do Java</option>
             <option value="Mago do CSS">Mago do CSS</option>
-            <option value="Guerreiro do HTML">Guerreiro do HTML</option>
+            <option value="Paladino do HTML">Paladino do HTML</option>
+            <option value="Bárbaro do Back-end">Bárbaro do Back-end</option>
+            <option value="Domador de Dados">Domador de Dados</option>
+            <option value="Elfo do Front-end">Elfo do Front-end</option>
+            <option value="Caçador de Bugs">Caçador de Bugs</option>
           </select>
         </div>
         <div>

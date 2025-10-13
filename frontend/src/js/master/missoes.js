@@ -4,6 +4,29 @@ import { showError, showSuccess } from '../utils/toast.js';
 export let originalMissions = [];
 export let originalSubmissions = [];
 
+/**
+ * Converte Firestore Timestamp ou string para JavaScript Date
+ * @param {*} timestamp - Pode ser Firestore Timestamp, string ISO, ou Date
+ * @returns {Date|null} - JavaScript Date ou null se inválido
+ */
+function parseFirestoreDate(timestamp) {
+  if (!timestamp) return null;
+
+  // Se já é um Date válido
+  if (timestamp instanceof Date && !isNaN(timestamp.getTime())) {
+    return timestamp;
+  }
+
+  // Se é um Firestore Timestamp (objeto com seconds e nanoseconds)
+  if (typeof timestamp === 'object' && timestamp.seconds !== undefined) {
+    return new Date(timestamp.seconds * 1000);
+  }
+
+  // Se é uma string ou número, tentar converter
+  const date = new Date(timestamp);
+  return isNaN(date.getTime()) ? null : date;
+}
+
 // Função para verificar se há filtros ativos
 export function checkActiveFilters(type) {
   if (type === 'submission') {
@@ -24,12 +47,66 @@ export function checkActiveFilters(type) {
   return false;
 }
 
-// Abrir arquivo de forma segura (fallbacks)
-export function openFileSecurely(fileUrl) {
+// Abrir arquivo com preview adequado ao tipo
+export function openFileWithPreview(fileUrl, fileName = 'arquivo') {
   try {
-    const newWindow = window.open(fileUrl, '_blank', 'noopener,noreferrer');
-    if (newWindow) {
-    } else {
+    console.log('🔗 Abrindo arquivo:', { fileUrl, fileName });
+
+    // Validar se a URL é válida
+    if (!fileUrl || fileUrl === '[object Object]') {
+      console.error('❌ URL inválida ou objeto:', fileUrl);
+      showError('URL do arquivo é inválida');
+      return;
+    }
+
+    // Se for URL do Firebase Storage, usar nosso backend como proxy
+    if (fileUrl.includes('firebasestorage.googleapis.com')) {
+      // Obter token de autenticação
+      const token = localStorage.getItem('token');
+
+      // Criar URL do proxy com token na URL (para evitar problemas de CORS com headers)
+      const proxyUrl = `http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
+
+      // Usar o proxy que criamos no backend (contorna CORS)
+      console.log('📡 Usando proxy para arquivo Firebase:', proxyUrl);
+
+      // Fazer fetch do conteúdo e criar blob URL
+      try {
+        showSuccess('Carregando arquivo...');
+
+        // Abrir em nova aba com método temporário
+        const link = document.createElement('a');
+        link.href = proxyUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        return; // Interromper execução após abrir o link
+      } catch (fetchError) {
+        console.error('❌ Erro ao buscar arquivo via proxy:', fetchError);
+        // Continuar com o método padrão em caso de erro
+      }
+
+      fileUrl = proxyUrl;
+    }
+
+    // Detectar extensão do arquivo
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    console.log('📄 Extensão detectada:', extension);
+
+    // Tipos de arquivo que o navegador renderiza nativamente
+    const imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'];
+    const codeTypes = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml', 'md', 'txt', 'py', 'java', 'c', 'cpp', 'h'];
+    const pdfTypes = ['pdf'];
+    const videoTypes = ['mp4', 'webm', 'ogg'];
+    const audioTypes = ['mp3', 'wav', 'ogg'];
+
+    // Para imagens, PDFs e vídeos: abrir diretamente (navegador renderiza)
+    if (imageTypes.includes(extension) || pdfTypes.includes(extension) || videoTypes.includes(extension) || audioTypes.includes(extension)) {
+      console.log('✅ Tipo renderizável pelo navegador, abrindo diretamente');
+      // Usar método de abrir que força navegação completa em vez de popup
       const link = document.createElement('a');
       link.href = fileUrl;
       link.target = '_blank';
@@ -37,11 +114,157 @@ export function openFileSecurely(fileUrl) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      return;
     }
+
+    // Para código e texto: criar preview com syntax highlighting
+    if (codeTypes.includes(extension)) {
+      console.log('📝 Arquivo de código, criando preview');
+      openCodePreview(fileUrl, fileName, extension);
+      return;
+    }
+
+    // Para outros tipos: usar mesmo método de navegação completa
+    console.log('⚠️ Tipo desconhecido, tentando abrir no navegador');
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showSuccess('Abrindo arquivo no navegador...');
   } catch (error) {
-    console.error('Erro ao abrir arquivo:', error);
+    console.error('❌ Erro ao abrir arquivo:', error);
     showError('Erro ao abrir arquivo: ' + (error.message || error));
   }
+}
+
+// Criar preview de código com syntax highlighting
+function openCodePreview(fileUrl, fileName, extension) {
+  try {
+    console.log('📥 Criando preview para arquivo:', fileName);
+
+    // Verificar se é URL do Firebase Storage e usar proxy se necessário
+    if (fileUrl.includes('firebasestorage.googleapis.com')) {
+      // Obter token de autenticação
+      const token = localStorage.getItem('token');
+
+      // Criar URL do proxy com token na URL
+      const proxyUrl = `http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
+      console.log('📡 Usando proxy para arquivo Firebase no preview:', proxyUrl);
+      fileUrl = proxyUrl;
+    }
+
+    // Abrir uma nova aba com navegação direta - usar método que força navegação completa
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log('✅ Link de visualização aberto:', fileUrl);
+    showSuccess('Abrindo arquivo para visualização...');
+  } catch (error) {
+    console.error('❌ Erro ao criar preview:', error);
+    showError('Não foi possível carregar o preview. Baixando arquivo...');
+    downloadFile(fileUrl, fileName);
+  }
+}
+
+// Função auxiliar para escapar HTML
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Função para escapar strings em atributos HTML (evita quebra de onclick)
+function escapeAttribute(str) {
+  if (!str) return '';
+  return str
+    .replace(/\\/g, '\\\\')  // Escape backslashes primeiro
+    .replace(/'/g, "\\'")     // Escape aspas simples
+    .replace(/"/g, '\\"')     // Escape aspas duplas
+    .replace(/\n/g, '\\n')    // Escape quebras de linha
+    .replace(/\r/g, '\\r');   // Escape retorno de carro
+}
+
+// Função para download seguro de arquivo (exportada para uso global)
+export async function downloadFileSecurely(fileUrl, fileName) {
+  try {
+    console.log('⬇️ Download iniciado:', { fileUrl, fileName });
+
+    // Se for URL do Firebase Storage, usar nossa API backend para proxy
+    if (fileUrl.includes('firebasestorage.googleapis.com')) {
+      // Obter token de autenticação
+      const token = localStorage.getItem('token');
+
+      // Notificar o usuário
+      showSuccess('Preparando download...');
+
+      // Usar fetch com o token para buscar o arquivo via proxy
+      const response = await fetch(`http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`);
+
+      if (!response.ok) {
+        throw new Error(`Erro ao baixar arquivo: ${response.status} ${response.statusText}`);
+      }
+
+      // Obter o blob do arquivo
+      const blob = await response.blob();
+
+      // Criar URL local para o blob
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Criar link e forçar download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.target = '_self'; // Evitar abrir nova aba
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Limpar URL do blob após o download
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+
+      showSuccess('Download iniciado!');
+      console.log('✅ Download via proxy iniciado:', fileName);
+      return;
+    }
+
+    // Para outros tipos de URL, usar método direto
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('❌ Erro ao iniciar download:', error);
+    showError('Erro ao baixar arquivo: ' + (error.message || error));
+  }
+}
+
+// Função interna para download (usada no preview de código)
+function downloadFile(fileUrl, fileName) {
+  downloadFileSecurely(fileUrl, fileName);
+}
+
+// Função para abrir arquivo de forma segura
+export function openFileSecurely(fileUrl) {
+  // Extrair nome do arquivo da URL (para melhorar UX)
+  const fileName = fileUrl.split('/').pop()?.split('?')[0] || 'arquivo';
+  openFileWithPreview(fileUrl, fileName);
 }
 
 export async function loadSubmissions() {
@@ -51,6 +274,12 @@ export async function loadSubmissions() {
 
     const data = await apiRequest('/submissoes');
     originalSubmissions = data || [];
+
+    // Popular filtros dinamicamente
+    await populateFilterTurmas();
+    if (window.originalStudents) {
+      populateFilterClasses(window.originalStudents);
+    }
 
     const hasActiveFilters = checkActiveFilters('submission');
     if (hasActiveFilters) {
@@ -73,6 +302,12 @@ export async function loadMissions() {
 
     const data = await apiRequest('/missoes');
     originalMissions = data || [];
+
+    // Popular filtros dinamicamente
+    await populateFilterTurmas();
+    if (window.originalStudents) {
+      populateFilterClasses(window.originalStudents);
+    }
 
     const hasActiveFilters = checkActiveFilters('mission');
     if (hasActiveFilters) {
@@ -172,15 +407,17 @@ function createSubmissionCard(submission) {
     rejected: 'Rejeitado'
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'Data não informada';
+  const formatDate = (dateValue) => {
+    if (!dateValue) return 'Data não informada';
+
     try {
-      const date = new Date(dateStr);
-      // Verificar se a data é válida
-      if (isNaN(date.getTime())) {
-        console.error('Data inválida recebida:', dateStr);
+      const date = parseFirestoreDate(dateValue);
+
+      if (!date) {
+        console.error('❌ Data inválida recebida:', dateValue);
         return 'Data inválida';
       }
+
       return date.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
@@ -194,9 +431,90 @@ function createSubmissionCard(submission) {
     }
   };
 
-  // Processar arquivos
+  // Processar arquivos - Debug
+  console.log('📎 Arquivos da submissão:', {
+    id: submission.id,
+    hasFilePaths: !!submission.filePaths,
+    filePathsLength: submission.filePaths?.length,
+    filePathsType: Array.isArray(submission.filePaths) ? 'array' : typeof submission.filePaths,
+    hasFileUrls: !!submission.fileUrls,
+    fileUrlsLength: submission.fileUrls?.length,
+    fileUrlsType: Array.isArray(submission.fileUrls) ? 'array' : typeof submission.fileUrls,
+    hasFileUrl: !!submission.fileUrl,
+    fileUrlType: typeof submission.fileUrl,
+    filePaths: submission.filePaths,
+    fileUrls: submission.fileUrls,
+    fileUrl: submission.fileUrl,
+    // Tipos de cada elemento em fileUrls se for array
+    fileUrlsElementTypes: Array.isArray(submission.fileUrls) ? submission.fileUrls.map(u => typeof u) : null
+  });
+
   let filesHtml = '';
-  if (submission.filePaths && submission.filePaths.length > 0) {
+
+  // Prioridade 1: fileUrls (array) - Firebase Storage
+  if (submission.fileUrls && submission.fileUrls.length > 0) {
+    filesHtml = `
+      <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+          <i class="fas fa-paperclip mr-2"></i>
+          Arquivos enviados (${submission.fileUrls.length})
+        </h4>
+        <div class="space-y-2">
+          ${submission.fileUrls.map((fileUrl, index) => {
+      // Validar se fileUrl é uma string ou objeto {url, name, path}
+      let actualUrl = fileUrl;
+      let fileName = `arquivo${index + 1}`;
+
+      if (!fileUrl) {
+        console.warn('⚠️ fileUrl ausente no índice', index);
+        return '';
+      }
+
+      // Se fileUrl é um objeto (formato antigo do Firebase Storage)
+      if (typeof fileUrl === 'object' && fileUrl.url) {
+        console.log('📦 fileUrl é objeto, extraindo URL:', fileUrl);
+        actualUrl = fileUrl.url;
+        fileName = fileUrl.name || fileName;
+      }
+      // Se fileUrl é uma string (formato correto)
+      else if (typeof fileUrl === 'string') {
+        actualUrl = fileUrl;
+        fileName = fileUrl.split('/').pop()?.split('?')[0] || fileName;
+      }
+      // Tipo inválido
+      else {
+        console.error('❌ fileUrl com tipo inválido:', typeof fileUrl, fileUrl);
+        return '';
+      }
+
+      const decodedFileName = decodeURIComponent(fileName);
+      const escapedUrl = escapeAttribute(actualUrl);
+      const escapedName = escapeAttribute(decodedFileName);
+
+      return `
+              <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
+                <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                  <i class="fas fa-file-code text-blue-600 mr-2"></i>${decodedFileName}
+                </span>
+                <div class="flex gap-2 ml-2">
+                  <button onclick="window.downloadFileSecurely('${escapedUrl}', '${escapedName}')"
+                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+                    <i class="fas fa-download mr-1"></i>Baixar
+                  </button>
+                  <button onclick="window.openFileWithPreview('${escapedUrl}', '${escapedName}')" 
+                          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+                    <i class="fas fa-eye mr-1"></i>Ver
+                  </button>
+                </div>
+              </div>
+            `;
+    }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  // Prioridade 2: filePaths com fileUrls correspondentes
+  else if (submission.filePaths && submission.filePaths.length > 0) {
     filesHtml = `
       <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
@@ -207,19 +525,22 @@ function createSubmissionCard(submission) {
           ${submission.filePaths.map((filePath, index) => {
       const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || `arquivo${index + 1}`;
       const fileUrl = submission.fileUrls?.[index] || filePath;
+      const escapedUrl = escapeAttribute(fileUrl);
+      const escapedName = escapeAttribute(fileName);
+
       return `
               <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
                 <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
                   <i class="fas fa-file-code text-blue-600 mr-2"></i>${fileName}
                 </span>
                 <div class="flex gap-2 ml-2">
-                  <a href="${fileUrl}" download="${fileName}"
+                  <button onclick="window.downloadFileSecurely('${escapedUrl}', '${escapedName}')"
                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
                     <i class="fas fa-download mr-1"></i>Baixar
-                  </a>
-                  <button onclick="window.open('${fileUrl}', '_blank')" 
+                  </button>
+                  <button onclick="window.openFileWithPreview('${escapedUrl}', '${escapedName}')" 
                           class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
-                    <i class="fas fa-external-link-alt mr-1"></i>Ver
+                    <i class="fas fa-eye mr-1"></i>Ver
                   </button>
                 </div>
               </div>
@@ -228,17 +549,46 @@ function createSubmissionCard(submission) {
         </div>
       </div>
     `;
-  } else if (submission.fileUrl) {
+  }
+  // Prioridade 3: fileUrl singular
+  else if (submission.fileUrl && typeof submission.fileUrl === 'string') {
+    const fileName = submission.fileUrl.split('/').pop()?.split('?')[0] || 'arquivo';
+    const decodedFileName = decodeURIComponent(fileName);
+    const escapedUrl = escapeAttribute(submission.fileUrl);
+    const escapedName = escapeAttribute(decodedFileName);
+
     filesHtml = `
-      <div class="mb-3 flex gap-2">
-        <a href="${submission.fileUrl}" download
-           class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm inline-flex items-center">
-          <i class="fas fa-download mr-2"></i>Baixar Arquivo
-        </a>
-        <button onclick="window.open('${submission.fileUrl}', '_blank')" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm inline-flex items-center">
-          <i class="fas fa-external-link-alt mr-2"></i>Ver Arquivo
-        </button>
+      <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+          <i class="fas fa-paperclip mr-2"></i>
+          Arquivo enviado
+        </h4>
+        <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
+          <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+            <i class="fas fa-file-code text-blue-600 mr-2"></i>${decodedFileName}
+          </span>
+          <div class="flex gap-2 ml-2">
+            <button onclick="window.downloadFileSecurely('${escapedUrl}', '${escapedName}')"
+               class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+              <i class="fas fa-download mr-1"></i>Baixar
+            </button>
+            <button onclick="window.openFileWithPreview('${escapedUrl}', '${escapedName}')" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs whitespace-nowrap inline-flex items-center">
+              <i class="fas fa-eye mr-1"></i>Ver
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  // Caso não tenha nenhum arquivo
+  else {
+    filesHtml = `
+      <div class="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200 flex items-center">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          Nenhum arquivo foi enviado com esta submissão
+        </p>
       </div>
     `;
   }
@@ -542,6 +892,102 @@ export function setupSubmissionFilters() {
   }
 
   if (applyBtn) applyBtn.addEventListener('click', applySubmissionFilters);
+}
+
+// Função para popular dinamicamente os selects de turma nos filtros
+export async function populateFilterTurmas() {
+  try {
+    const response = await apiRequest('/turmas');
+    if (response && response.turmas) {
+      // Atualizar select de filtro de submissões
+      const submissionTurmaSelect = document.getElementById('filter-submission-turma');
+      if (submissionTurmaSelect) {
+        const currentValue = submissionTurmaSelect.value;
+        submissionTurmaSelect.innerHTML = '<option value="all">Todas as turmas</option>';
+
+        response.turmas.forEach(turma => {
+          const option = document.createElement('option');
+          option.value = turma;
+          option.textContent = turma;
+          submissionTurmaSelect.appendChild(option);
+        });
+
+        if (currentValue && currentValue !== 'all') {
+          submissionTurmaSelect.value = currentValue;
+        }
+      }
+
+      // Atualizar select de filtro de missões
+      const missionTurmaSelect = document.getElementById('filter-mission-turma');
+      if (missionTurmaSelect) {
+        const currentValue = missionTurmaSelect.value;
+        missionTurmaSelect.innerHTML = '<option value="all">Todas as turmas</option>';
+
+        response.turmas.forEach(turma => {
+          const option = document.createElement('option');
+          option.value = turma;
+          option.textContent = turma;
+          missionTurmaSelect.appendChild(option);
+        });
+
+        if (currentValue && currentValue !== 'all') {
+          missionTurmaSelect.value = currentValue;
+        }
+      }
+
+      console.log('[FILTROS] Turmas carregadas nos selects:', response.turmas.length);
+    }
+  } catch (err) {
+    console.error('[FILTROS] Erro ao carregar turmas:', err);
+  }
+}
+
+// Função para popular dinamicamente as classes nos filtros
+export function populateFilterClasses(students) {
+  try {
+    // Extrair classes únicas dos alunos
+    const uniqueClasses = [...new Set(students.map(s => s.class).filter(Boolean))];
+
+    // Atualizar select de filtro de submissões
+    const submissionClassSelect = document.getElementById('filter-submission-class');
+    if (submissionClassSelect) {
+      const currentValue = submissionClassSelect.value;
+      submissionClassSelect.innerHTML = '<option value="all">Todas as classes</option>';
+
+      uniqueClasses.forEach(className => {
+        const option = document.createElement('option');
+        option.value = className;
+        option.textContent = className;
+        submissionClassSelect.appendChild(option);
+      });
+
+      if (currentValue && currentValue !== 'all') {
+        submissionClassSelect.value = currentValue;
+      }
+    }
+
+    // Atualizar select de filtro de missões
+    const missionClassSelect = document.getElementById('filter-mission-class');
+    if (missionClassSelect) {
+      const currentValue = missionClassSelect.value;
+      missionClassSelect.innerHTML = '<option value="all">Todas as classes</option>';
+
+      uniqueClasses.forEach(className => {
+        const option = document.createElement('option');
+        option.value = className;
+        option.textContent = className;
+        missionClassSelect.appendChild(option);
+      });
+
+      if (currentValue && currentValue !== 'all') {
+        missionClassSelect.value = currentValue;
+      }
+    }
+
+    console.log('[FILTROS] Classes carregadas nos selects:', uniqueClasses.length);
+  } catch (err) {
+    console.error('[FILTROS] Erro ao popular classes:', err);
+  }
 }
 
 export function setupMissionCreation() {

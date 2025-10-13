@@ -41,8 +41,9 @@ class SubmissionService {
             const fileUrls = [];
             if (files && files.length > 0) {
                 for (const file of files) {
-                    const fileUrl = await this.uploadFile(file, submissionData, submissionId);
-                    fileUrls.push(fileUrl);
+                    const fileData = await this.uploadFile(file, submissionData, submissionId);
+                    // Adicionar apenas a URL (string), não o objeto completo
+                    fileUrls.push(fileData.url);
                 }
             }
 

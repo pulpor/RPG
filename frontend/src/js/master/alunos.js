@@ -21,6 +21,9 @@ export async function loadApprovedStudents() {
     // manter referência global para módulos que esperam window.originalStudents
     window.originalStudents = originalStudents;
 
+    // Carregar turmas no filtro
+    await populateStudentTurmaFilter();
+
     // renderizar turmas caso já exista função disponível
     if (window.renderTurmas) window.renderTurmas();
 
@@ -214,23 +217,26 @@ export function createStudentCard(student) {
 // Função exportada para verificar filtros ativos
 export function checkActiveFilters(type) {
   if (type === 'student') {
-    const yearFilter = document.getElementById('student-year-filter')?.value;
+    const turmaFilter = document.getElementById('student-year-filter')?.value;
     const classFilter = document.getElementById('student-class-filter')?.value;
     const levelFilter = document.getElementById('student-level-filter')?.value;
-    return yearFilter !== 'all' || classFilter !== 'all' || levelFilter !== 'all';
+    return turmaFilter !== 'all' || classFilter !== 'all' || levelFilter !== 'all';
   }
   return false;
 }
 
 export function applyStudentFilters() {
-  const yearFilter = document.getElementById('student-year-filter')?.value || 'all';
+  const turmaFilter = document.getElementById('student-year-filter')?.value || 'all';
   const classFilter = document.getElementById('student-class-filter')?.value || 'all';
   const levelFilter = document.getElementById('student-level-filter')?.value || 'all';
 
   let filtered = originalStudents || [];
 
-  if (yearFilter !== 'all') {
-    filtered = filtered.filter(student => student.year == yearFilter);
+  if (turmaFilter !== 'all') {
+    filtered = filtered.filter(student => {
+      const studentTurma = student.turma || student.assignedTurma;
+      return studentTurma === turmaFilter;
+    });
   }
 
   if (classFilter !== 'all') {
@@ -241,7 +247,37 @@ export function applyStudentFilters() {
     filtered = filtered.filter(student => (student.level || 1) >= parseInt(levelFilter));
   }
 
+  console.log('[FILTROS] Aplicando filtros:', { turmaFilter, classFilter, levelFilter, resultados: filtered.length });
   renderStudents(filtered);
+}
+
+// Função para carregar turmas nos selects de filtro
+export async function populateStudentTurmaFilter() {
+  try {
+    const response = await apiRequest('/turmas');
+    if (response && response.turmas) {
+      const select = document.getElementById('student-year-filter');
+      if (select) {
+        // Manter a opção "Todas as turmas"
+        const currentValue = select.value;
+        select.innerHTML = '<option value="all">Todas as turmas</option>';
+
+        response.turmas.forEach(turma => {
+          const option = document.createElement('option');
+          option.value = turma;
+          option.textContent = turma;
+          select.appendChild(option);
+        });
+
+        // Restaurar valor anterior se ainda existir
+        if (currentValue && currentValue !== 'all') {
+          select.value = currentValue;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[FILTROS] Erro ao carregar turmas:', err);
+  }
 }
 
 export function setupStudentFilters() {
