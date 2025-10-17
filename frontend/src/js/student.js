@@ -939,13 +939,23 @@ function setupMissionSubmission() {
 
         const formData = new FormData();
         formData.append('missionId', selectedMissionId);
+
         // Para diagnóstico: enviar apenas o primeiro arquivo
         if (uploadedFiles.length > 0) {
             console.log('🔄 Enviando arquivo para diagnóstico:', uploadedFiles[0].name);
+            console.log('📊 Detalhes do arquivo:', {
+                name: uploadedFiles[0].name,
+                size: uploadedFiles[0].size,
+                type: uploadedFiles[0].type
+            });
             formData.append('code', uploadedFiles[0]);
         } else {
             console.log('⚠️ Nenhum arquivo para enviar');
+            return Toast.show('❌ Selecione um arquivo antes de enviar', 'error');
         }
+
+        // Validar FormData criada
+        console.log('📋 FormData preparada com campos:', Array.from(formData.keys()));
 
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
@@ -958,15 +968,21 @@ function setupMissionSubmission() {
             // 1. Enviar submissão para o backend
             const token = localStorage.getItem('token');
 
+            if (!token) {
+                throw new Error('Token não encontrado. Faça login novamente.');
+            }
+
             // Mostrar progresso ao usuário
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando (0%)...';
 
+            console.log('📤 Iniciando requisição POST para /submissoes/submit');
+
             const response = await fetch(`http://localhost:3000/submissoes/submit`, {
                 method: 'POST',
-                body: formData,
+                body: formData, // FormData já é tratado corretamente pelo navegador
                 headers: {
                     'Authorization': `Bearer ${token}`
-                    // NÃO incluir Content-Type - o navegador define automaticamente para multipart/form-data
+                    // NÃO incluir Content-Type - o navegador define automaticamente
                 }
             });
 

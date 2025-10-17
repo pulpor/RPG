@@ -290,6 +290,35 @@ class MissionService {
     }
 
     /**
+     * Atualizar status de uma missão para um aluno específico
+     * @param {string} missionId - ID da missão
+     * @param {string} userId - ID do aluno
+     * @param {string} newStatus - Novo status (disponivel, pendente, aprovada, rejeitada, concluida)
+     * @returns {Promise<Object>} - Dados atualizados
+     */
+    async updateMissionStatus(missionId, userId, newStatus) {
+        try {
+            console.log(`🔄 Atualizando status da missão ${missionId} para aluno ${userId}: ${newStatus}`);
+
+            const missionDoc = doc(db, this.collectionName, missionId);
+
+            // Manter o histórico de status
+            const dataToUpdate = {
+                [`userStatus.${userId}`]: newStatus,
+                updatedAt: serverTimestamp()
+            };
+
+            await updateDoc(missionDoc, dataToUpdate);
+            console.log(`✅ Status da missão atualizado para: ${newStatus}`);
+
+            return { missionId, userId, status: newStatus };
+        } catch (error) {
+            console.error(`❌ Erro ao atualizar status da missão ${missionId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Excluir missão
      * @param {string} missionId - ID da missão
      * @returns {Promise<boolean>} - true se excluída com sucesso

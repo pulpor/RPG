@@ -4,7 +4,7 @@ const router = express.Router();
 const { autenticar, ehMestre } = require('../middleware/auth');
 const { upload } = require('../utils/armazenamentoArquivos');
 
-router.post('/submit', autenticar, upload, async (req, res) => {
+router.post('/submit', autenticar, (req, res, next) => upload(req, res, next), async (req, res) => {
   console.log('🔵 [UPLOAD] Iniciando processamento de submissão...');
   try {
     console.log('🔵 [UPLOAD] Body:', req.body);
@@ -12,6 +12,7 @@ router.post('/submit', autenticar, upload, async (req, res) => {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
+      buffer: req.file.buffer ? `${req.file.buffer.length} bytes` : 'sem buffer',
       path: req.file.path
     } : 'Nenhum arquivo');
     console.log('🔵 [UPLOAD] User:', req.user ? {
@@ -21,15 +22,19 @@ router.post('/submit', autenticar, upload, async (req, res) => {
     } : 'Usuário não autenticado');
 
     const { missionId } = req.body;
-    const userId = req.user.userId;
-    const username = req.user.username;
+    const userId = req.user?.userId;
+    const username = req.user?.username;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuário não autenticado', details: 'Token inválido ou expirado' });
+    }
 
     if (!missionId) {
-      return res.status(400).json({ error: 'ID da missão não fornecido' });
+      return res.status(400).json({ error: 'ID da missão não fornecido', suggestion: 'Envie missionId no formulário' });
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: 'Nenhum arquivo foi enviado' });
+      return res.status(400).json({ error: 'Nenhum arquivo foi enviado', suggestion: 'Selecione um arquivo antes de enviar' });
     }
 
     console.log('🔵 [UPLOAD] MissionId:', missionId);
@@ -70,9 +75,22 @@ router.post('/submit', autenticar, upload, async (req, res) => {
 
     console.log('✅ [UPLOAD] Submissão criada com sucesso:', submission.id);
 
+    // Atualizar status da missão para 'pendente'
+    console.log('🔄 [UPLOAD] Atualizando status da missão para pendente...');
+    await missionService.updateMissionStatus(missionId, userId, 'pending');
+    console.log('✅ [UPLOAD] Status da missão atualizado para pendente');
+
+    // Gerar feedback automático com Gemini (em background, não bloqueia resposta)
+    console.log('🤖 [UPLOAD] Gerando feedback automático com Gemini...');
+    generateGeminiFeedback(submission, req.file, userService).catch(err => {
+      console.error('❌ [GEMINI] Erro ao gerar feedback:', err.message);
+    });
+
     res.json({
-      message: 'Submissão enviada com sucesso para Firebase Storage',
-      submission: submission
+      message: '✅ Submissão enviada com sucesso! Aguardando análise do professor...',
+      submission: submission,
+      status: 'pending',
+      feedback: 'Seu código será analisado automaticamente. Você receberá um feedback em breve!'
     });
 
   } catch (err) {
@@ -299,5 +317,83 @@ router.post('/:id/reject', autenticar, ehMestre, async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🤖 FUNÇÃO AUXILIAR: Gerar Feedback Automático com Gemini
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function generateGeminiFeedback(submission, file, userService) {
+  try {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const fs = require('fs').promises;
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.log('[GEMINI] API Key não configurada. Pulando feedback automático.');
+      return;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    console.log('🤖 [GEMINI] Gerando feedback para submissão:', submission.id);
+
+    // Ler conteúdo do arquivo
+    let fileContent = '';
+    if (file.buffer) {
+      fileContent = file.buffer.toString('utf-8');
+    } else if (file.path) {
+      fileContent = await fs.readFile(file.path, 'utf-8');
+    }
+
+    if (!fileContent) {
+      console.log('[GEMINI] Arquivo vazio. Pulando análise.');
+      return;
+    }
+
+    // Limitar tamanho do conteúdo para análise (Gemini tem limite)
+    const maxLength = 8000;
+    if (fileContent.length > maxLength) {
+      fileContent = fileContent.substring(0, maxLength) + '\n\n[... arquivo truncado ...]';
+    }
+
+    // Prompt para o Gemini analisar o código
+    const prompt = `Você é um professor de programação experiente. Um aluno enviou este código para a missão "${submission.missionTitle}".
+
+Por favor, forneça um feedback conciso e construtivo em português (máximo 3-4 frases):
+1. Cite 1 ponto positivo do código
+2. Cite 1 ponto que pode melhorar
+3. Dê uma dica prática
+
+Seja encorajador e educativo. Formato desejado:
+✅ Ponto Positivo: ...
+💡 Melhoria: ...
+🎯 Dica: ...
+
+CÓDIGO ENVIADO:
+\`\`\`
+${fileContent}
+\`\`\``;
+
+    // Chamar Gemini
+    const result = await model.generateContent(prompt);
+    const feedback = result.response.text();
+
+    console.log('✅ [GEMINI] Feedback gerado:', feedback.substring(0, 100) + '...');
+
+    // Salvar feedback no Firestore (em uma coleção separada)
+    const submissionService = require('../services/submissionService');
+    await submissionService.updateSubmission(submission.id, {
+      geminiFeedback: feedback,
+      feedbackGeneratedAt: new Date().toISOString()
+    });
+
+    console.log('✅ [GEMINI] Feedback salvo na submissão');
+
+  } catch (error) {
+    console.error('❌ [GEMINI] Erro ao gerar feedback:', error.message);
+    // Não lança erro para não bloquear o fluxo principal
+  }
+}
 
 module.exports = router;

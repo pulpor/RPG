@@ -34,9 +34,7 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Configurar multer para FormData
-const upload = multer({ storage: multer.memoryStorage() });
-app.use(upload.any());
+// NÃO usar multer global - cada rota usa seu próprio middleware
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {
@@ -119,6 +117,11 @@ const server = app.listen(port, () => {
   console.log('🔥 Firebase Firestore: Conectado');
   console.log('🤖 Gemini 2.5-Flash: Configurado');
 });
+
+// Aumentar timeout para upload de arquivos (60 segundos)
+server.timeout = 60000;
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 
 server.on('error', (err) => {
   console.error('❌ Erro no servidor:', err);
