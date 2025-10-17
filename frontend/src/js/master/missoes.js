@@ -816,12 +816,12 @@ export function applySubmissionFilters() {
     });
   }
 
-  if (turmaFilter !== 'all') filtered = filtered.filter(s => s.studentTurma === turmaFilter);
-  if (classFilter !== 'all') filtered = filtered.filter(s => s.studentClass === classFilter);
+  if (turmaFilter !== 'all') filtered = filtered.filter(s => (s.userTurma || s.studentTurma) === turmaFilter);
+  if (classFilter !== 'all') filtered = filtered.filter(s => (s.userClass || s.studentClass) === classFilter);
 
   if (studentFilter) {
     filtered = filtered.filter(s => {
-      const studentName = (s.studentUsername || s.studentName || '').toLowerCase();
+      const studentName = (s.username || s.studentUsername || s.studentName || '').toLowerCase();
       return studentName.includes(studentFilter);
     });
   }

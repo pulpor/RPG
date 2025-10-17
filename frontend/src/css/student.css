@@ -501,3 +501,30 @@ html[data-theme="dark"] [id$="-missions-list"] > div:hover {
     gap: 1rem !important;
   }
 }
+
+/* Botões de filtro de missões */
+.mission-filter-btn {
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mission-filter-btn:not(.active) {
+  opacity: 0.7;
+}
+
+.mission-filter-btn.active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.mission-filter-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: currentColor;
+  border-radius: 3px 3px 0 0;
+}

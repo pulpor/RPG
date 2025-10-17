@@ -540,34 +540,14 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     const completedCount = completedMissions.length;
     const pendingCount = pendingMissions.length;
 
-    // Atualizar contadores na interface
-    document.getElementById('total-missions').textContent = totalMissions;
-    document.getElementById('completed-missions').textContent = completedCount;
-    document.getElementById('pending-missions').textContent = pendingCount;
+    // Atualizar contadores nos botões de filtro que já existem no HTML
+    const availableCountEl = document.getElementById('available-count');
+    const pendingCountEl = document.getElementById('pending-count');
+    const completedCountEl = document.getElementById('completed-count');
 
-    // Criar os botões para alternar entre as seções
-    const sectionButtons = document.createElement('div');
-    sectionButtons.className = 'flex flex-wrap gap-4 mb-6';
-    sectionButtons.innerHTML = `
-        <button id="show-available-missions" class="section-button bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-blue-700 active">
-            <i class="fas fa-scroll mr-2"></i>
-            <span>Missões Disponíveis</span>
-            <span class="bg-white text-blue-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${availableMissions.length}</span>
-        </button>
-        
-        <button id="show-pending-missions" class="section-button bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-yellow-700">
-            <i class="fas fa-clock mr-2"></i>
-            <span>Missões Pendentes</span>
-            <span class="bg-white text-yellow-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${pendingMissions.length}</span>
-        </button>
-        
-        <button id="show-completed-missions" class="section-button bg-green-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:bg-green-700">
-            <i class="fas fa-trophy mr-2"></i>
-            <span>Missões Concluídas</span>
-            <span class="bg-white text-green-700 px-2 py-1 rounded-full ml-2 text-xs font-bold">${completedMissions.length}</span>
-        </button>
-    `;
-    missionsList.appendChild(sectionButtons);
+    if (availableCountEl) availableCountEl.textContent = availableMissions.length;
+    if (pendingCountEl) pendingCountEl.textContent = pendingMissions.length;
+    if (completedCountEl) completedCountEl.textContent = completedMissions.length;
 
     // Container para todas as seções de missões (inicialmente só mostra disponíveis)
     const missionsContainer = document.createElement('div');
@@ -887,25 +867,39 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         }
     }
 
-    // Adicionar manipuladores de eventos aos botões
-    const availableButton = document.getElementById('show-available-missions');
-    const pendingButton = document.getElementById('show-pending-missions');
-    const completedButton = document.getElementById('show-completed-missions');
+    // Adicionar manipuladores para os botões de filtro
+    const filterAvailableBtn = document.getElementById('filter-available');
+    const filterPendingBtn = document.getElementById('filter-pending');
+    const filterCompletedBtn = document.getElementById('filter-completed');
 
-    if (availableButton) {
-        availableButton.addEventListener('click', () => {
+    if (filterAvailableBtn) {
+        filterAvailableBtn.addEventListener('click', () => {
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.mission-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Adicionar classe active ao botão clicado
+            filterAvailableBtn.classList.add('active');
             showMissionSection('available-missions-section');
         });
     }
 
-    if (pendingButton) {
-        pendingButton.addEventListener('click', () => {
+    if (filterPendingBtn) {
+        filterPendingBtn.addEventListener('click', () => {
+            document.querySelectorAll('.mission-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            filterPendingBtn.classList.add('active');
             showMissionSection('pending-missions-section');
         });
     }
 
-    if (completedButton) {
-        completedButton.addEventListener('click', () => {
+    if (filterCompletedBtn) {
+        filterCompletedBtn.addEventListener('click', () => {
+            document.querySelectorAll('.mission-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            filterCompletedBtn.classList.add('active');
             showMissionSection('completed-missions-section');
         });
     }
@@ -913,24 +907,7 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     // Inicialmente, mostrar a seção de missões disponíveis
     showMissionSection('available-missions-section');
 
-    updateMissionCounters(availableMissions, completedMissions, submissions);
     updateMissionSelect(availableMissions);
-}
-
-function updateMissionCounters(missions, completedMissions = [], submissions = []) {
-    const total = document.getElementById('total-missions');
-    const completed = document.getElementById('completed-missions');
-    const pending = document.getElementById('pending-missions');
-
-    // Total de missões disponíveis + concluídas
-    const totalMissions = missions.length + completedMissions.length;
-
-    // Contar submissões pendentes (não penalidades/recompensas)
-    const pendingSubmissions = submissions.filter(s => !s.isPenaltyReward && s.status === 'pending').length;
-
-    if (total) total.textContent = totalMissions;
-    if (completed) completed.textContent = completedMissions.length;
-    if (pending) pending.textContent = pendingSubmissions;
 }
 
 function setupMissionSubmission() {
@@ -1453,5 +1430,163 @@ document.addEventListener("DOMContentLoaded", function () {
                 themeIcon.className = "fas fa-moon theme-icon-moon";
             }
         }
+
+        // Inicializar sistema de bug report
+        initBugReportSystem();
     }, 100);
 });
+
+// ====================================
+// SISTEMA DE BUG REPORT
+// ====================================
+
+function initBugReportSystem() {
+    const bugReportBtn = document.getElementById('bug-report-btn');
+    const bugReportModal = document.getElementById('bug-report-modal');
+    const closeBugModal = document.getElementById('close-bug-modal');
+    const cancelBugReport = document.getElementById('cancel-bug-report');
+    const bugReportForm = document.getElementById('bug-report-form');
+
+    // Abrir modal
+    if (bugReportBtn) {
+        bugReportBtn.addEventListener('click', () => {
+            bugReportModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    // Fechar modal
+    function closeBugReportModal() {
+        bugReportModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        bugReportForm.reset();
+    }
+
+    if (closeBugModal) {
+        closeBugModal.addEventListener('click', closeBugReportModal);
+    }
+
+    if (cancelBugReport) {
+        cancelBugReport.addEventListener('click', closeBugReportModal);
+    }
+
+    // Fechar modal clicando fora
+    bugReportModal.addEventListener('click', (e) => {
+        if (e.target === bugReportModal) {
+            closeBugReportModal();
+        }
+    });
+
+    // Enviar bug report
+    if (bugReportForm) {
+        bugReportForm.addEventListener('submit', handleBugReportSubmit);
+    }
+}
+
+async function handleBugReportSubmit(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submit-bug-report');
+    const originalText = submitBtn.innerHTML;
+
+    try {
+        // Mostrar loading
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+        submitBtn.disabled = true;
+
+        const formData = new FormData(e.target);
+
+        // Adicionar informações do usuário
+        const userName = localStorage.getItem('username') || 'Usuário Desconhecido';
+        const userEmail = localStorage.getItem('email') || 'email@desconhecido.com';
+
+        const title = formData.get('title');
+        const description = formData.get('description');
+        const screenshot = formData.get('screenshot');
+
+        // Converter e COMPRIMIR screenshot para Base64
+        let screenshotBase64 = '';
+        if (screenshot && screenshot.size > 0) {
+            console.log('[BUG REPORT] Tamanho original:', (screenshot.size / 1024).toFixed(2), 'KB');
+
+            // Comprimir imagem antes de converter para Base64
+            screenshotBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Criar canvas para redimensionar
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Redimensionar mantendo proporção (máx 1200px de largura)
+                        let width = img.width;
+                        let height = img.height;
+                        const maxWidth = 1200;
+
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Converter para Base64 com qualidade reduzida (0.7 = 70%)
+                        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                        console.log('[BUG REPORT] Comprimida para:', (compressed.length / 1024).toFixed(2), 'KB');
+                        resolve(compressed);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(screenshot);
+            });
+        }
+
+        // Preparar dados para enviar ao backend
+        const bugReportData = {
+            title,
+            description,
+            userName,
+            userEmail,
+            url: window.location.href,
+            screenshot: screenshotBase64 || null
+        };
+
+        console.log('[BUG REPORT] Enviando para o backend...');
+
+        // Enviar para o backend próprio
+        const response = await fetch('http://localhost:3000/api/bug-report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(bugReportData)
+        });
+
+        const result = await response.json();
+
+        console.log('[BUG REPORT] Resposta:', result); if (response.ok && result.success) {
+            Toast.show('✅ Bug reportado com sucesso! 📧 Email enviado para pulppor@gmail.com', 'success');
+
+            // Fechar modal
+            document.getElementById('bug-report-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            e.target.reset();
+        } else {
+            throw new Error(result.message || 'Erro ao enviar bug report');
+        }
+
+    } catch (error) {
+        console.error('[BUG REPORT] Erro:', error);
+        Toast.show('❌ Erro ao enviar bug report. Tente novamente.', 'error');
+    } finally {
+        // Restaurar botão
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}

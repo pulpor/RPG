@@ -7,12 +7,14 @@ require('./config/firebase');
 
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const autenticacaoRotas = require('./routes/auth');
 const missoesRotas = require('./routes/missions');
 const usuariosRotas = require('./routes/users');
 const submissoesRotas = require('./routes/submissions');
 const geminiRotas = require('./routes/gemini');
 const turmasRotas = require('./routes/turmas');
+const bugReportEmailRotas = require('./routes/bugReportEmail');
 
 const app = express();
 const port = 3000;
@@ -31,6 +33,10 @@ app.use(cors({
 // limite de payload para upload de arquivos
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Configurar multer para FormData
+const upload = multer({ storage: multer.memoryStorage() });
+app.use(upload.any());
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {
@@ -65,6 +71,7 @@ app.use('/usuarios', usuariosRotas);
 app.use('/submissoes', submissoesRotas);
 app.use('/gemini', geminiRotas);
 app.use('/turmas', turmasRotas);
+app.use('/api', bugReportEmailRotas);
 app.use('/files', require('./routes/files'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 console.log('[SERVER] ✅ Rotas configuradas');
