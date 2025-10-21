@@ -317,6 +317,7 @@ class SubmissionService {
      */
     async updateSubmission(submissionId, updates) {
         try {
+            console.log(`[SUBMISSION SERVICE] Atualizando submissão ${submissionId} com:`, updates);
             const submissionDoc = doc(db, this.collectionName, submissionId);
 
             const updateData = {
@@ -324,17 +325,26 @@ class SubmissionService {
                 updatedAt: serverTimestamp()
             };
 
+            // Remover campos undefined (Firestore não aceita undefined)
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === undefined) {
+                    delete updateData[key];
+                }
+            });
+
             // Se mudou o status, adicionar timestamp de revisão
             if (updates.status && updates.status !== 'pending') {
                 updateData.reviewedAt = serverTimestamp();
             }
 
+            console.log(`[SUBMISSION SERVICE] Dados a serem salvos:`, updateData);
             await updateDoc(submissionDoc, updateData);
             console.log(`✅ Submissão atualizada: ${submissionId}`);
 
             return await this.getSubmissionById(submissionId);
         } catch (error) {
             console.error('❌ Erro ao atualizar submissão:', error);
+            console.error('❌ Stack:', error.stack);
             throw error;
         }
     }

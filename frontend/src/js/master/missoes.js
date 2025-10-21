@@ -344,18 +344,18 @@ export function renderSubmissions(submissions) {
   container.querySelectorAll('.approve-submission-btn').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.submissionId;
+      console.log('[MISSOES] Aprovando submissão:', id);
       try {
-        if (window.apiRequest) {
-          await apiRequest(`/submissoes/${id}/aprovar`, { method: 'PUT' });
-          showSuccess('Submissão aprovada');
-        } else {
-          showSuccess('Submissão aprovada (simulado)');
-        }
-      } catch (err) {
-        console.error('Erro ao aprovar submissão:', err);
-        showError('Erro ao aprovar submissão: ' + (err.message || err));
-      } finally {
+        const response = await apiRequest(`/submissoes/${id}/approve`, {
+          method: 'POST',
+          body: JSON.stringify({ feedback: '' })
+        });
+        console.log('[MISSOES] Resposta da aprovação:', response);
+        showSuccess('Submissão aprovada com sucesso!');
         await loadSubmissions();
+      } catch (err) {
+        console.error('[MISSOES] Erro ao aprovar submissão:', err);
+        showError('Erro ao aprovar submissão: ' + (err.message || err));
       }
     };
   });
@@ -363,18 +363,18 @@ export function renderSubmissions(submissions) {
   container.querySelectorAll('.reject-submission-btn').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.submissionId;
+      console.log('[MISSOES] Rejeitando submissão:', id);
       try {
-        if (window.apiRequest) {
-          await apiRequest(`/submissoes/${id}/rejeitar`, { method: 'PUT' });
-          showSuccess('Submissão rejeitada');
-        } else {
-          showSuccess('Submissão rejeitada (simulado)');
-        }
-      } catch (err) {
-        console.error('Erro ao rejeitar submissão:', err);
-        showError('Erro ao rejeitar submissão: ' + (err.message || err));
-      } finally {
+        const response = await apiRequest(`/submissoes/${id}/reject`, {
+          method: 'POST',
+          body: JSON.stringify({ feedback: '' })
+        });
+        console.log('[MISSOES] Resposta da rejeição:', response);
+        showSuccess('Submissão rejeitada com sucesso!');
         await loadSubmissions();
+      } catch (err) {
+        console.error('[MISSOES] Erro ao rejeitar submissão:', err);
+        showError('Erro ao rejeitar submissão: ' + (err.message || err));
       }
     };
   });
@@ -698,17 +698,12 @@ export function renderMissions(missions) {
       const id = btn.dataset.missionId;
       if (!confirm('Deletar missão?')) return;
       try {
-        if (window.apiRequest) {
-          await apiRequest(`/missoes/${id}`, { method: 'DELETE' });
-          showSuccess('Missão deletada');
-        } else {
-          showSuccess('Missão deletada (simulado)');
-        }
+        await apiRequest(`/missoes/${id}`, { method: 'DELETE' });
+        showSuccess('Missão deletada com sucesso!');
+        await loadMissions();
       } catch (err) {
         console.error('Erro ao deletar missão:', err);
         showError('Erro ao deletar missão: ' + (err.message || err));
-      } finally {
-        await loadMissions();
       }
     };
   });

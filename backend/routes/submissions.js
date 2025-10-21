@@ -216,32 +216,48 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
 
     // Buscar submissão por ID
     const submission = await submissionService.getSubmissionById(submissionId);
+    console.log('[DEBUG] Submissão encontrada:', submission ? 'SIM' : 'NÃO');
     if (!submission) {
       return res.status(404).json({ error: 'Submissão não encontrada' });
     }
 
     // Buscar usuário relacionado
+    console.log('[DEBUG] Buscando usuário:', submission.userId);
     const user = await userService.getUserById(submission.userId);
+    console.log('[DEBUG] Usuário encontrado:', user ? 'SIM' : 'NÃO');
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
     // Atualizar XP apenas se a submissão não foi completada antes
     const wasAlreadyCompleted = submission.completed;
+    console.log('[DEBUG] Já foi completada antes?', wasAlreadyCompleted);
 
     // Aprovar a submissão
-    const updatedSubmission = await submissionService.approveSubmission(submissionId, {
+    const reviewData = {
       feedback: feedback || '',
       xpAwarded: submission.xp || 0
-    });
+    };
+
+    // Manter geminiAnalysis se já existir
+    if (submission.geminiAnalysis) {
+      reviewData.geminiAnalysis = submission.geminiAnalysis;
+    }
+
+    console.log('[DEBUG] Aprovando submissão com dados:', reviewData);
+    const updatedSubmission = await submissionService.approveSubmission(submissionId, reviewData);
+    console.log('[DEBUG] Submissão aprovada com sucesso');
 
     // Atualizar XP apenas se a missão não foi completada antes
     let updatedUser = user;
     if (!wasAlreadyCompleted) {
+      console.log('[DEBUG] Adicionando XP ao usuário:', submission.xp || 0);
       // Adicionar XP ao usuário
       updatedUser = await userService.addXP(user.id, submission.xp || 0);
+      console.log('[DEBUG] XP adicionado com sucesso');
 
       // Registrar no histórico do usuário
+      console.log('[DEBUG] Registrando no histórico do usuário');
       const historyEntry = {
         type: 'mission_approved',
         missionId: submission.missionId,
@@ -257,7 +273,9 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
       history.push(historyEntry);
 
       // Atualizar histórico do usuário
+      console.log('[DEBUG] Atualizando histórico do usuário');
       updatedUser = await userService.updateUser(user.id, { history });
+      console.log('[DEBUG] Histórico atualizado com sucesso');
     }
 
     console.log('[DEBUG] Submissão aprovada com sucesso:', submissionId);
@@ -267,7 +285,12 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
     });
   } catch (err) {
     console.error('[DEBUG] Erro ao aprovar submissão:', err);
-    res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
+    console.error('[DEBUG] Stack trace:', err.stack);
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      details: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 

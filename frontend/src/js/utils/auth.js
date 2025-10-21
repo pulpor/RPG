@@ -47,13 +47,26 @@ export function validateAuthentication() {
 export async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
 
+    if (!token) {
+        console.error('[API REQUEST] Token não encontrado no localStorage');
+        throw new Error('Token não fornecido');
+    }
+
     const config = {
+        ...options,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        ...options
+            'Authorization': `Bearer ${token}`,
+            ...(options.headers || {})
+        }
     };
+
+    console.log('[API REQUEST]', {
+        endpoint,
+        method: config.method || 'GET',
+        hasToken: !!token,
+        headers: config.headers
+    });
 
     const response = await fetch(`${API_URL}${endpoint}`, config);
 

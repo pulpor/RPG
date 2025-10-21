@@ -11,6 +11,58 @@ import * as Pendentes from './pendentes.js';
 import * as Alunos from './alunos.js';
 import * as Missoes from './missoes.js';
 
+// ====================================
+// SISTEMA DE TOAST NOTIFICATIONS
+// ====================================
+const Toast = {
+	container: null,
+
+	init() {
+		if (!this.container) {
+			this.container = document.createElement("div");
+			this.container.id = "toast-container";
+			this.container.className = "fixed top-4 right-4 z-50 space-y-2";
+			document.body.appendChild(this.container);
+		}
+	},
+
+	show(message, type = "info") {
+		this.init();
+
+		const types = {
+			error: { class: "bg-red-500", icon: "exclamation-triangle" },
+			success: { class: "bg-green-500", icon: "check-circle" },
+			warning: { class: "bg-yellow-500", icon: "exclamation-circle" },
+			info: { class: "bg-blue-500", icon: "info-circle" }
+		};
+
+		const config = types[type] || types.info;
+		const toast = document.createElement("div");
+		toast.className = `${config.class} text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
+		toast.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${config.icon} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+		this.container.appendChild(toast);
+
+		requestAnimationFrame(() => {
+			toast.classList.remove("translate-x-full", "opacity-0");
+		});
+
+		setTimeout(() => {
+			toast.classList.add("translate-x-full", "opacity-0");
+			setTimeout(() => {
+				if (toast.parentNode) {
+					toast.parentNode.removeChild(toast);
+				}
+			}, 300);
+		}, 3000);
+	}
+};
+
 // Função global para verificar filtros ativos de qualquer módulo
 window.checkActiveFilters = function (type) {
 	if (type === 'student') return Alunos.checkActiveFilters?.(type) || false;
@@ -187,8 +239,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	setupLogout();
 	setupAllButtonEvents();
 
-	// Expor apiRequest globalmente antes de carregar dados
+	// Expor apiRequest e Toast globalmente antes de carregar dados
 	window.apiRequest = apiRequest;
+	window.Toast = Toast;
 
 	// Inicializar módulos (cada módulo implementa sua própria lógica)
 	try {
@@ -229,4 +282,249 @@ document.addEventListener('DOMContentLoaded', async () => {
 	window.renderTurmas = Pendentes.renderTurmas;
 	window.showPenaltyRewardModal = showPenaltyRewardModal;
 	window.showStudentHistoryModal = showStudentHistoryModal;
+
+	// Inicializar sistema de bug report
+	console.log('[MASTER] Inicializando bug report system...');
+	initBugReportSystem();
+
+	// Inicializar theme toggle
+	console.log('[MASTER] Inicializando theme toggle...');
+	initThemeToggle();
+
+	// Debug: testar se o botão existe após carregamento
+	setTimeout(() => {
+		const testBtn = document.getElementById('bug-report-btn');
+		console.log('[MASTER] Botão de bug report após timeout:', testBtn);
+		if (testBtn) {
+			console.log('[MASTER] Adicionando listener de teste...');
+			testBtn.addEventListener('click', () => {
+				console.log('[MASTER] CLICK DETECTADO NO TESTE!');
+			});
+		}
+	}, 1000);
 });
+
+// ====================================
+// SISTEMA DE BUG REPORT
+// ====================================
+
+function initBugReportSystem() {
+	console.log('[BUG REPORT] Inicializando sistema...');
+
+	const bugReportBtn = document.getElementById('bug-report-btn');
+	const bugReportModal = document.getElementById('bug-report-modal');
+	const closeBugModal = document.getElementById('close-bug-modal');
+	const cancelBugReport = document.getElementById('cancel-bug-report');
+	const bugReportForm = document.getElementById('bug-report-form');
+
+	console.log('[BUG REPORT] Elementos:', {
+		btn: !!bugReportBtn,
+		modal: !!bugReportModal,
+		close: !!closeBugModal,
+		cancel: !!cancelBugReport,
+		form: !!bugReportForm
+	});
+
+	if (!bugReportBtn || !bugReportModal) {
+		console.error('[BUG REPORT] Elementos não encontrados!');
+		return;
+	}
+
+	// Abrir modal
+	bugReportBtn.addEventListener('click', () => {
+		console.log('[BUG REPORT] Botão clicado!');
+		bugReportModal.classList.remove('hidden');
+		document.body.style.overflow = 'hidden';
+	});
+
+	// Fechar modal
+	function closeBugReportModal() {
+		bugReportModal.classList.add('hidden');
+		document.body.style.overflow = 'auto';
+		if (bugReportForm) bugReportForm.reset();
+	}
+
+	if (closeBugModal) {
+		closeBugModal.addEventListener('click', closeBugReportModal);
+	}
+
+	if (cancelBugReport) {
+		cancelBugReport.addEventListener('click', closeBugReportModal);
+	}
+
+	// Fechar modal clicando fora
+	bugReportModal.addEventListener('click', (e) => {
+		if (e.target === bugReportModal) {
+			closeBugReportModal();
+		}
+	});
+
+	// Enviar bug report
+	if (bugReportForm) {
+		bugReportForm.addEventListener('submit', handleBugReportSubmit);
+	}
+}
+
+async function handleBugReportSubmit(e) {
+	e.preventDefault();
+
+	const submitBtn = document.getElementById('submit-bug-report');
+	const originalText = submitBtn.innerHTML;
+
+	try {
+		// Mostrar loading
+		submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+		submitBtn.disabled = true;
+
+		const formData = new FormData(e.target);
+
+		// Adicionar informações do usuário
+		const userName = localStorage.getItem('username') || 'Mestre Desconhecido';
+		const userEmail = localStorage.getItem('email') || 'email@desconhecido.com';
+
+		const title = formData.get('title');
+		const description = formData.get('description');
+		const screenshot = formData.get('screenshot');
+
+		// Converter e COMPRIMIR screenshot para Base64
+		let screenshotBase64 = '';
+		if (screenshot && screenshot.size > 0) {
+			console.log('[BUG REPORT] Tamanho original:', (screenshot.size / 1024).toFixed(2), 'KB');
+
+			// Comprimir imagem antes de converter para Base64
+			screenshotBase64 = await new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					const img = new Image();
+					img.onload = () => {
+						// Criar canvas para redimensionar
+						const canvas = document.createElement('canvas');
+						const ctx = canvas.getContext('2d');
+
+						// Redimensionar mantendo proporção (máx 1200px de largura)
+						let width = img.width;
+						let height = img.height;
+						const maxWidth = 1200;
+
+						if (width > maxWidth) {
+							height = (height * maxWidth) / width;
+							width = maxWidth;
+						}
+
+						canvas.width = width;
+						canvas.height = height;
+						ctx.drawImage(img, 0, 0, width, height);
+
+						// Converter para Base64 com qualidade reduzida (0.7 = 70%)
+						const compressed = canvas.toDataURL('image/jpeg', 0.7);
+						console.log('[BUG REPORT] Comprimida para:', (compressed.length / 1024).toFixed(2), 'KB');
+						resolve(compressed);
+					};
+					img.onerror = reject;
+					img.src = e.target.result;
+				};
+				reader.onerror = reject;
+				reader.readAsDataURL(screenshot);
+			});
+		}
+
+		// Preparar dados para enviar ao backend
+		const bugReportData = {
+			title,
+			description,
+			userName,
+			userEmail,
+			url: window.location.href,
+			screenshot: screenshotBase64 || null
+		};
+
+		console.log('[BUG REPORT] Enviando para o backend...');
+
+		// Enviar para o backend próprio
+		const response = await fetch('http://localhost:3000/api/bug-report', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json'
+			},
+			body: JSON.stringify(bugReportData)
+		});
+
+		const result = await response.json();
+
+		console.log('[BUG REPORT] Resposta:', result);
+
+		if (response.ok && result.success) {
+			Toast.show('✅ Bug reportado com sucesso! 📧 Email enviado', 'success');
+
+			// Fechar modal
+			document.getElementById('bug-report-modal').classList.add('hidden');
+			document.body.style.overflow = 'auto';
+			e.target.reset();
+		} else {
+			throw new Error(result.message || 'Erro ao enviar bug report');
+		}
+
+	} catch (error) {
+		console.error('[BUG REPORT] Erro:', error);
+		Toast.show('❌ Erro ao enviar bug report. Tente novamente.', 'error');
+	} finally {
+		// Restaurar botão
+		submitBtn.innerHTML = originalText;
+		submitBtn.disabled = false;
+	}
+}
+
+// ====================================
+// THEME TOGGLE (DARK MODE)
+// ====================================
+
+function initThemeToggle() {
+	const themeToggle = document.getElementById('theme-toggle');
+	const themeIcon = document.getElementById('theme-icon');
+
+	if (!themeToggle || !themeIcon) {
+		console.warn('[THEME] Elementos não encontrados');
+		return;
+	}
+
+	// Carregar tema salvo
+	const currentTheme = localStorage.getItem('theme') || 'light';
+	applyTheme(currentTheme);
+
+	// Toggle ao clicar
+	themeToggle.addEventListener('click', () => {
+		const currentTheme = localStorage.getItem('theme') || 'light';
+		const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+		applyTheme(newTheme);
+		localStorage.setItem('theme', newTheme);
+	});
+}
+
+function applyTheme(theme) {
+	const html = document.documentElement;
+	const body = document.body;
+	const themeIcon = document.getElementById('theme-icon');
+
+	console.log('[THEME] Aplicando tema:', theme);
+
+	if (theme === 'dark') {
+		html.classList.add('dark');
+		body.classList.add('dark');
+		html.setAttribute('data-theme', 'dark');
+		if (themeIcon) {
+			themeIcon.classList.remove('fa-moon');
+			themeIcon.classList.add('fa-sun');
+		}
+		console.log('[THEME] Dark mode ativado');
+	} else {
+		html.classList.remove('dark');
+		body.classList.remove('dark');
+		html.setAttribute('data-theme', 'light');
+		if (themeIcon) {
+			themeIcon.classList.remove('fa-sun');
+			themeIcon.classList.add('fa-moon');
+		}
+		console.log('[THEME] Light mode ativado');
+	}
+}

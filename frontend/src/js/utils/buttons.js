@@ -7,7 +7,7 @@ import { apiRequest } from './auth.js';
 export function setupAllButtonEvents() {
     setupUserActionButtons();
     setupStudentActionButtons();
-    setupSubmissionButtons();
+    // setupSubmissionButtons(); // DESATIVADO - missoes.js já gerencia os botões de submissão
     setupMissionButtons();
 }
 
