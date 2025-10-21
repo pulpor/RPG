@@ -222,8 +222,8 @@
 /* ===================== WIZARD CONTAINER ===================== */
 .wizard-container {
   position: absolute;
-  top: 75px;
-  right: 20px;
+  top: 80px;
+  right: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -268,12 +268,12 @@
 /* Light mode = Ponta ROSA */
 .wand-tip {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
   background: radial-gradient(circle, #ec4899, #f472b6);
   border-radius: 50%;
-  top: 4px;
-  right: 4px;
+  top: 7px;
+  right: 22px;
   box-shadow: 0 0 10px #ec4899, 0 0 20px #f472b6,
     0 0 30px rgba(236, 72, 153, 0.5);
   animation: wandGlow 2s ease-in-out infinite;
@@ -513,10 +513,10 @@
   }
 
   .wand-tip {
-    width: 5px;
-    height: 5px;
-    top: 3px;
-    right: 3px;
+    width: 2.8px;
+    height: 2.8px;
+    top: 6.5px;
+    right: 20.5px;
   }
 
   .magic-sparkles {
@@ -575,10 +575,10 @@
   }
 
   .wand-tip {
-    width: 5px;
-    height: 5px;
-    top: 3px;
-    right: 3px;
+    width: 2.6px;
+    height: 2.6px;
+    top: 6px;
+    right: 19px;
   }
 
   .magic-sparkles {
