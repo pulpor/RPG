@@ -206,7 +206,20 @@ class SubmissionService {
             const submissionSnap = await getDoc(submissionDoc);
 
             if (submissionSnap.exists()) {
-                return { id: submissionSnap.id, ...submissionSnap.data() };
+                const data = submissionSnap.data();
+
+                // Converter Timestamps do Firestore para ISO strings
+                if (data.submittedAt && data.submittedAt.toDate) {
+                    data.submittedAt = data.submittedAt.toDate().toISOString();
+                }
+                if (data.createdAt && data.createdAt.toDate) {
+                    data.createdAt = data.createdAt.toDate().toISOString();
+                }
+                if (data.updatedAt && data.updatedAt.toDate) {
+                    data.updatedAt = data.updatedAt.toDate().toISOString();
+                }
+
+                return { id: submissionSnap.id, ...data };
             }
             return null;
         } catch (error) {
@@ -246,7 +259,20 @@ class SubmissionService {
             const submissions = [];
 
             querySnapshot.forEach((doc) => {
-                submissions.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+
+                // Converter Timestamps do Firestore para ISO strings
+                if (data.submittedAt && data.submittedAt.toDate) {
+                    data.submittedAt = data.submittedAt.toDate().toISOString();
+                }
+                if (data.createdAt && data.createdAt.toDate) {
+                    data.createdAt = data.createdAt.toDate().toISOString();
+                }
+                if (data.updatedAt && data.updatedAt.toDate) {
+                    data.updatedAt = data.updatedAt.toDate().toISOString();
+                }
+
+                submissions.push({ id: doc.id, ...data });
             });
 
             console.log(`📋 ${submissions.length} submissões encontradas (filtros: ${JSON.stringify(filters)})`);

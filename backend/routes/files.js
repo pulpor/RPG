@@ -25,11 +25,11 @@ router.get('/proxy', async (req, res) => {
 
         // Importar para usar jwt
         const jwt = require('jsonwebtoken');
-        const config = require('../config/firebase');
+        const jwtSecret = process.env.JWT_SECRET || 'sua-chave-secreta';
 
         try {
             // Verificar se o token é válido
-            const decoded = jwt.verify(token, config.jwtSecret);
+            const decoded = jwt.verify(token, jwtSecret);
             console.log(`[PROXY] Token verificado para usuário: ${decoded.userId}`);
         } catch (err) {
             console.error('[PROXY] Token inválido:', err.message);

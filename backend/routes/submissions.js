@@ -188,7 +188,14 @@ router.get('/', autenticar, ehMestre, async (req, res) => {
       };
     }));
 
-    console.log('[DEBUG] Submissões enriquecidas:', enrichedSubmissions.length);
+    // ORDENAR: Mais recentes primeiro (submittedAt DESC)
+    enrichedSubmissions.sort((a, b) => {
+      const dateA = a.submittedAt ? new Date(a.submittedAt) : new Date(0);
+      const dateB = b.submittedAt ? new Date(b.submittedAt) : new Date(0);
+      return dateB - dateA; // DESC (mais recente primeiro)
+    });
+
+    console.log('[DEBUG] Submissões enriquecidas e ordenadas:', enrichedSubmissions.length);
     res.json(enrichedSubmissions);
   } catch (err) {
     console.error('[DEBUG] Erro na rota GET /submissoes:', err);
