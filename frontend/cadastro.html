@@ -8,6 +8,14 @@
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Google Fonts - Cinzel para texto mágico -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -43,10 +51,23 @@
           aria-label="Alternar tema"
         >
           <i id="theme-icon" class="fas fa-moon theme-icon-moon"></i>
-          <div class="lumus-nox-tooltip">Lumus</div>
         </button>
-        <div class="nox"></div>
 
+        <!-- Wizard com varinha mágica (aparece ao hover) -->
+        <div class="wizard-container">
+          <div class="speech-bubble">
+            <div class="wizard-wand">
+              <div class="wand-stick"></div>
+              <div class="wand-tip"></div>
+              <div class="magic-sparkles">
+                <span class="sparkle sparkle-1">✨</span>
+                <span class="sparkle sparkle-2">✨</span>
+                <span class="sparkle sparkle-3">✨</span>
+              </div>
+            </div>
+            <div class="wizard-spell"></div>
+          </div>
+        </div>
         <!-- Logo -->
         <div class="logo-title">
           <i class="fas fa-dice-d20 logo-icon"></i>

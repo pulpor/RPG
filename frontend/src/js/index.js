@@ -164,3 +164,58 @@ if (loginButton) {
     });
   }
 });
+
+// ============================
+// TEMA E FEITIÇO MÁGICO
+// ============================
+function toggleTheme() {
+  const html = document.documentElement;
+  const themeIcon = document.getElementById("theme-icon");
+
+  const isDark = html.getAttribute("data-theme") === "dark";
+
+  if (isDark) {
+    // Mudando para LIGHT mode
+    html.removeAttribute("data-theme");
+    html.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+    if (themeIcon) {
+      themeIcon.className = "fas fa-moon theme-icon-moon";
+    }
+  } else {
+    // Mudando para DARK mode
+    html.setAttribute("data-theme", "dark");
+    html.classList.add("dark");
+    localStorage.setItem("theme", "dark");
+    if (themeIcon) {
+      themeIcon.className = "fas fa-sun theme-icon-sun";
+    }
+  }
+}
+
+// Aplicar tema ao carregar página
+function applyTheme() {
+  const savedTheme = localStorage.getItem("theme") || "light";
+  const html = document.documentElement;
+  const themeIcon = document.getElementById("theme-icon");
+
+  if (savedTheme === "dark") {
+    html.setAttribute("data-theme", "dark");
+    html.classList.add("dark");
+    if (themeIcon) {
+      themeIcon.className = "fas fa-sun theme-icon-sun";
+    }
+  } else {
+    html.removeAttribute("data-theme");
+    html.classList.remove("dark");
+    if (themeIcon) {
+      themeIcon.className = "fas fa-moon theme-icon-moon";
+    }
+  }
+}
+
+// Expor para o global (necessário para onclick no HTML)
+window.toggleTheme = toggleTheme;
+
+// Aplicar tema imediatamente
+applyTheme();

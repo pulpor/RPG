@@ -4,7 +4,10 @@
 }
 
 [data-theme="dark"] body {
-  background: var(--animated-bg, linear-gradient(-45deg, #1f2937, #374151, #4b5563, #6b7280));
+  background: var(
+    --animated-bg,
+    linear-gradient(-45deg, #1f2937, #374151, #4b5563, #6b7280)
+  );
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -70,7 +73,6 @@
   transform: translateY(-50%) !important;
   z-index: 1000 !important;
 }
-
 
 [data-theme="dark"] #password-strength-text {
   color: #d5d5d5;
@@ -155,10 +157,9 @@
   animation: rotate 6s linear infinite;
 }
 
-
 [data-theme="dark"] .btn-secondary {
   background: #374151; /* cinza escuro */
-  color: #e5e7eb;      /* cinza claro */
+  color: #e5e7eb; /* cinza claro */
   border-color: #4b5563;
   cursor: pointer;
   opacity: 1;
@@ -189,14 +190,14 @@
   background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
 }
 
-
 #theme-icon {
   font-size: 18px;
   z-index: 3;
   position: relative;
   display: inline-block;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s cubic-bezier(0.4, 0.2, 0.2, 1), filter 0.3s, text-shadow 0.3s;
+  transition: transform 0.3s cubic-bezier(0.4, 0.2, 0.2, 1), filter 0.3s,
+    text-shadow 0.3s;
 }
 
 [data-theme="dark"] .theme-toggle:hover #theme-icon {
@@ -214,50 +215,253 @@
 
 /* Transições suaves para tema */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
 }
 
-/* ===================== TOOLTIP/BALÃOZINHO ===================== */
-.theme-toggle .lumus-nox-tooltip {
+/* ===================== WIZARD CONTAINER ===================== */
+.wizard-container {
   position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #111;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 15px;
+  top: 75px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   opacity: 0;
+  transform: translateY(-10px);
   pointer-events: none;
-  white-space: nowrap;
+  transition: opacity 0.4s ease, transform 0.4s ease;
   z-index: 1001;
-  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.nox {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-  display: block; /* sempre presente, mas invisível até o hover */
-  position: absolute;
-  top: 70px;
-  left: 380px;
-  width: 50px;
-  height: 50px;
-  background-image: url('../../assets/nox.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  z-index: 10001;
-}
-
-[data-theme="dark"] .nox {
-  background-image: url('../../assets/lumus.png');
-}
-
-.theme-toggle:hover + .nox {
+.theme-toggle:hover ~ .wizard-container {
   opacity: 1;
+  transform: translateY(0);
   pointer-events: auto;
+}
+
+/* === VARINHA MÁGICA === */
+.wizard-wand {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wand-stick {
+  position: absolute;
+  width: 2px;
+  height: 22px;
+  background: linear-gradient(to bottom, #9333ea, #7e22ce);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 4px rgba(147, 51, 234, 0.3);
+}
+
+[data-theme="dark"] .wand-stick {
+  background: linear-gradient(to bottom, #6b7280, #4b5563);
+}
+
+/* Light mode = Ponta ROSA */
+.wand-tip {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #ec4899, #f472b6);
+  border-radius: 50%;
+  top: 4px;
+  right: 4px;
+  box-shadow: 0 0 10px #ec4899, 0 0 20px #f472b6,
+    0 0 30px rgba(236, 72, 153, 0.5);
+  animation: wandGlow 2s ease-in-out infinite;
+}
+
+/* Dark mode = Ponta ROXA */
+[data-theme="dark"] .wand-tip {
+  background: radial-gradient(circle, #a855f7, #c084fc);
+  box-shadow: 0 0 10px #a855f7, 0 0 20px #c084fc,
+    0 0 30px rgba(168, 85, 247, 0.5);
+}
+
+@keyframes wandGlow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* === SPARKLES MÁGICOS === */
+.magic-sparkles {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 9px;
+  opacity: 0;
+  animation: sparkleFloat 2s ease-in-out infinite;
+}
+
+.sparkle-1 {
+  top: 2px;
+  right: 10px;
+  animation-delay: 0s;
+}
+
+.sparkle-2 {
+  top: 10px;
+  right: 2px;
+  animation-delay: 0.3s;
+}
+
+.sparkle-3 {
+  top: 14px;
+  right: 14px;
+  animation-delay: 0.6s;
+}
+
+@keyframes sparkleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.3);
+  }
+}
+
+/* === BALÃO DE FALA === */
+.speech-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.12),
+    rgba(219, 39, 119, 0.08)
+  );
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(236, 72, 153, 0.35);
+  border-radius: 16px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15),
+    0 0 20px rgba(236, 72, 153, 0.08);
+  animation: bubbleFloat 3s ease-in-out infinite;
+}
+
+/* Triângulo do balão (ponteiro) - ALINHADO À DIREITA */
+.speech-bubble::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid rgba(236, 72, 153, 0.35);
+  filter: drop-shadow(0 -2px 4px rgba(236, 72, 153, 0.1));
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 22px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(236, 72, 153, 0.12);
+}
+
+/* Dark mode = balão roxo/cinza */
+[data-theme="dark"] .speech-bubble {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.12),
+    rgba(139, 92, 246, 0.08)
+  );
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15),
+    0 0 20px rgba(168, 85, 247, 0.08);
+}
+
+[data-theme="dark"] .speech-bubble::before {
+  border-bottom-color: rgba(168, 85, 247, 0.35);
+  filter: drop-shadow(0 -2px 4px rgba(168, 85, 247, 0.1));
+}
+
+[data-theme="dark"] .speech-bubble::after {
+  border-bottom-color: rgba(168, 85, 247, 0.12);
+}
+
+@keyframes bubbleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* === TEXTO DO FEITIÇO === */
+.wizard-spell {
+  font-family: "Cinzel", serif, system-ui;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ec4899;
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  animation: spellPulse 2s ease-in-out infinite;
+}
+
+/* Exibir NOX no light mode */
+.wizard-spell::before {
+  content: "Nox";
+}
+
+/* Dark mode = texto roxo claro */
+[data-theme="dark"] .wizard-spell {
+  color: #c084fc;
+  text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
+}
+
+/* Exibir LUMUS no dark mode */
+[data-theme="dark"] .wizard-spell::before {
+  content: "Lumus";
+}
+
+@keyframes spellPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03);
+  }
 }
 
 /* === BOTÃO DE TEMA DENTRO DO CARD === */
@@ -281,7 +485,6 @@
   overflow: hidden;
 }
 
-
 /* ===================== RESPONSIVIDADE ===================== */
 @media (max-width: 768px) {
   .theme-toggle {
@@ -292,6 +495,56 @@
   }
   #theme-icon {
     font-size: 16px !important;
+  }
+
+  .wizard-container {
+    top: 67px; /* 16px + 36px + 15px */
+    right: 16px;
+  }
+
+  .wizard-wand {
+    width: 30px;
+    height: 30px;
+  }
+
+  .wand-stick {
+    width: 1.8px;
+    height: 20px;
+  }
+
+  .wand-tip {
+    width: 5px;
+    height: 5px;
+    top: 3px;
+    right: 3px;
+  }
+
+  .magic-sparkles {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sparkle {
+    font-size: 8px;
+  }
+
+  .speech-bubble {
+    padding: 6px 12px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .speech-bubble::before {
+    right: 18px;
+  }
+
+  .speech-bubble::after {
+    right: 20px;
+  }
+
+  .wizard-spell {
+    font-size: 11px;
+    letter-spacing: 1.2px;
   }
 }
 
@@ -304,5 +557,78 @@
   }
   #theme-icon {
     font-size: 14px !important;
+  }
+
+  .wizard-container {
+    top: 59px; /* 12px + 32px + 15px */
+    right: 12px;
+  }
+
+  .wizard-wand {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wand-stick {
+    width: 1.5px;
+    height: 18px;
+  }
+
+  .wand-tip {
+    width: 5px;
+    height: 5px;
+    top: 3px;
+    right: 3px;
+  }
+
+  .magic-sparkles {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sparkle {
+    font-size: 7px;
+  }
+
+  .sparkle-1 {
+    top: 2px;
+    right: 9px;
+  }
+
+  .sparkle-2 {
+    top: 9px;
+    right: 2px;
+  }
+
+  .sparkle-3 {
+    top: 12px;
+    right: 12px;
+  }
+
+  .speech-bubble {
+    padding: 5px 10px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+
+  .speech-bubble::before {
+    border-left-width: 8px;
+    border-right-width: 8px;
+    border-bottom-width: 8px;
+    top: -8px;
+    right: 15px;
+  }
+
+  .speech-bubble::after {
+    border-left-width: 6px;
+    border-right-width: 6px;
+    border-bottom-width: 6px;
+    top: -6px;
+    right: 17px;
+  }
+
+  .wizard-spell {
+    font-size: 10px;
+    letter-spacing: 1px;
   }
 }
