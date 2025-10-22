@@ -2,7 +2,7 @@ const express = require('express');
 const { autenticar, ehMestre } = require('../middleware/auth');
 const fs = require('fs').promises;
 const path = require('path');
-const { updateUserLevel, getLevelInfo } = require('../utils/levelSystem');
+const { updateUserLevel, getLevelInfo, getRank } = require('../utils/levelSystem');
 const router = express.Router();
 
 // Usar serviços Firebase
@@ -75,6 +75,7 @@ router.get('/me', autenticar, async (req, res) => {
 
     // Obter informações detalhadas do nível
     const levelInfo = getLevelInfo(user.xp || 0);
+    const rank = getRank(levelInfo.currentLevel);
 
     res.json({
       id: user.id,
@@ -85,6 +86,7 @@ router.get('/me', autenticar, async (req, res) => {
       level: user.level,
       xp: user.xp,
       isMaster: user.isMaster,
+      rank: rank,
       levelInfo: levelInfo
     });
   } catch (error) {
@@ -645,6 +647,85 @@ router.post('/:id/change-turma', autenticar, ehMestre, async (req, res) => {
   } catch (err) {
     console.error('[CHANGE-TURMA] ❌ Erro ao trocar aluno de turma:', err);
     res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
+  }
+});
+
+// 🔧 ROTA TEMPORÁRIA: Recalcular XP de missões já aprovadas
+router.post('/recalculate-xp', autenticar, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    console.log('[RECALC-XP] Iniciando recálculo de XP para usuário:', userId);
+
+    // Buscar usuário
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Buscar todas as submissões aprovadas do usuário
+    const allSubmissions = await submissionService.getSubmissionsByUser(userId);
+    const approvedSubmissions = allSubmissions.filter(sub => sub.status === 'approved');
+
+    console.log('[RECALC-XP] Submissões aprovadas encontradas:', approvedSubmissions.length);
+
+    // Calcular XP total das submissões aprovadas
+    let totalXP = 0;
+    const missionService = require('../services/missionService');
+
+    for (const submission of approvedSubmissions) {
+      // Buscar XP da submissão ou da missão
+      let xpFromSubmission = submission.xp || submission.xpAwarded || 0;
+
+      if (xpFromSubmission === 0) {
+        // Tentar buscar da missão
+        try {
+          const mission = await missionService.getMissionById(submission.missionId);
+          xpFromSubmission = mission?.xp || 0;
+        } catch (e) {
+          console.warn('[RECALC-XP] Não foi possível obter missão:', submission.missionId);
+        }
+      }
+
+      totalXP += xpFromSubmission;
+      console.log('[RECALC-XP] Missão:', submission.missionTitle, '- XP:', xpFromSubmission);
+    }
+
+    console.log('[RECALC-XP] XP total calculado:', totalXP);
+    console.log('[RECALC-XP] XP atual do usuário:', user.xp || 0);
+
+    // Atualizar XP do usuário se necessário
+    if (totalXP !== (user.xp || 0)) {
+      const { calculateLevel } = require('../utils/levelSystem');
+      const levelInfo = calculateLevel(totalXP);
+
+      await userService.updateUser(userId, {
+        xp: totalXP,
+        level: levelInfo.currentLevel
+      });
+
+      console.log('[RECALC-XP] ✅ XP atualizado de', user.xp || 0, 'para', totalXP);
+      console.log('[RECALC-XP] ✅ Nível atualizado para', levelInfo.currentLevel);
+
+      res.json({
+        message: 'XP recalculado com sucesso!',
+        xpAnterior: user.xp || 0,
+        xpAtualizado: totalXP,
+        nivelAnterior: user.level || 1,
+        nivelAtualizado: levelInfo.currentLevel,
+        missoesContabilizadas: approvedSubmissions.length
+      });
+    } else {
+      res.json({
+        message: 'XP já está correto!',
+        xpAtual: totalXP,
+        nivelAtual: user.level,
+        missoesContabilizadas: approvedSubmissions.length
+      });
+    }
+
+  } catch (err) {
+    console.error('[RECALC-XP] ❌ Erro ao recalcular XP:', err);
+    res.status(500).json({ error: 'Erro ao recalcular XP', details: err.message });
   }
 });
 

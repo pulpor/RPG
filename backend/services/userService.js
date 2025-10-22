@@ -183,16 +183,32 @@ class UserService {
      * @returns {Promise<Object>} - Usuário com XP atualizado
      */
     async addXP(userId, xpToAdd) {
+        console.log(`[ADD-XP] ⭐ Iniciando adição de XP`);
+        console.log(`[ADD-XP] ⭐ UserId: ${userId}`);
+        console.log(`[ADD-XP] ⭐ XP a adicionar: ${xpToAdd}`);
+
         const user = await this.getUserById(userId);
         if (!user) throw new Error('User not found');
 
+        console.log(`[ADD-XP] ⭐ XP atual do usuário: ${user.xp || 0}`);
         const newXP = (user.xp || 0) + xpToAdd;
-        const newLevel = Math.floor(newXP / 100) + 1; // 100 XP por nível
+        console.log(`[ADD-XP] ⭐ Novo XP total: ${newXP}`);
 
-        return await this.updateUser(userId, {
+        // Calcular nível real usando tabela do sistema de níveis
+        const { calculateLevel } = require('../utils/levelSystem');
+        const levelInfo = calculateLevel(newXP);
+        const newLevel = levelInfo.currentLevel;
+
+        console.log(`[ADD-XP] ⭐ Nível anterior: ${user.level || 1}`);
+        console.log(`[ADD-XP] ⭐ Novo nível: ${newLevel}`);
+
+        const updatedUser = await this.updateUser(userId, {
             xp: newXP,
             level: newLevel
         });
+
+        console.log(`[ADD-XP] ✅ XP atualizado com sucesso!`);
+        return updatedUser;
     }
 
     /**

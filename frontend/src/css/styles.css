@@ -309,7 +309,7 @@ nav button:hover {
 .filter-section.active ~ .page-content .tab-content,
 .filter-section[style*="display: block"] ~ .page-content .tab-content,
 .filter-section.show-filters ~ .page-content .tab-content {
-  padding-top: calc(var(--filter-height) + 1rem);
+  padding-top: calc(var(--filter-height) - 2rem);
 }
 
 /* Remover regras antigas desnecessárias */
@@ -990,12 +990,7 @@ body .filter-section.show-filters {
   position: relative !important;
 }
 
-/* Espaçamento específico após filtros visíveis */
-.filter-section.active + .tab-content,
-.filter-section[style*="display: block"] + .tab-content,
-.filter-section.show-filters + .tab-content {
-  margin-top: 0.5rem;
-}
+
 
 /* === CORREÇÃO ESPECÍFICA DE Z-INDEX PARA FILTROS === */
 /* Garantir que filtros ativos apareçam corretamente */
@@ -1019,9 +1014,4 @@ body .filter-section.show-filters {
 /* Títulos h2 com espaçamento adequado quando há filtros */
 .tab-content h2:first-child {
   margin-top: 0;
-}
-
-/* Corrigir problema de espaçamento específico */
-.tab-content:first-child {
-  padding-top: 0.5rem;
 }

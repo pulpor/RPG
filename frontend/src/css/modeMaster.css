@@ -560,13 +560,8 @@ html[data-theme="dark"] .text-xs.font-medium {
   display: flex !important;
 }
 
-/* 3. MAIN-CONTENT - ESPAÇAMENTO REDUZIDO */
-.main-content {
-  margin: 16px auto 40px auto !important;
-  padding: 32px !important;
-}
 
-/* 4. GARANTIR QUE FILTROS FUNCIONEM */
+/* GARANTIR QUE FILTROS FUNCIONEM */
 #missions-filters,
 #students-filters,
 #submissions-filters {

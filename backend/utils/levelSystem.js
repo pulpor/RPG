@@ -46,14 +46,18 @@ function calculateLevel(currentXP) {
     }
 
     return {
-        currentLevel,
-        currentXP,
-        xpForNextLevel,
-        xpProgressInCurrentLevel,
-        xpNeededForCurrentLevel,
+        currentLevel,           // Nível atual (1-10)
+        totalXP: currentXP,     // XP total acumulado
+        currentXP: xpProgressInCurrentLevel,  // XP atual dentro do nível
+        nextLevelXP: xpNeededForCurrentLevel, // Total de XP necessário para o próximo nível
+        xpForNextLevel,         // XP absoluto necessário para o próximo nível
         progressPercentage: xpNeededForCurrentLevel > 0 ?
             Math.round((xpProgressInCurrentLevel / xpNeededForCurrentLevel) * 100) : 100,
-        isMaxLevel: currentLevel === 10
+        isMaxLevel: currentLevel === 10,
+        // Atalhos para compatibilidade
+        level: currentLevel,
+        xpProgressInCurrentLevel,
+        xpNeededForCurrentLevel
     };
 }
 
@@ -77,9 +81,21 @@ function getLevelInfo(currentXP) {
     return calculateLevel(currentXP);
 }
 
+/**
+ * Calcula o rank baseado no nível
+ * @param {number} level - Nível do usuário
+ * @returns {string} - Rank (Junior, Pleno, Senior)
+ */
+function getRank(level) {
+    if (level >= 8) return 'Senior';
+    if (level >= 4) return 'Pleno';
+    return 'Junior';
+}
+
 module.exports = {
     XP_LEVELS,
     calculateLevel,
     updateUserLevel,
-    getLevelInfo
+    getLevelInfo,
+    getRank
 };

@@ -181,20 +181,33 @@ const LevelSystem = {
         }
 
         return {
-            level: currentLevel,
-            currentXP: xpProgressInCurrentLevel, // XP atual dentro do nível
-            nextLevelXP: xpNeededForCurrentLevel, // Total XP necessário para o próximo nível
-            totalXP: currentXP, // XP total acumulado
-            xpForNextLevel,
+            currentLevel: currentLevel,  // Nível atual (1-10)
+            totalXP: currentXP,          // XP total acumulado
+            currentXP: xpProgressInCurrentLevel,  // XP atual dentro do nível
+            nextLevelXP: xpNeededForCurrentLevel, // Total de XP necessário para o próximo nível
+            xpForNextLevel,              // XP absoluto necessário para o próximo nível
             progressPercentage: xpNeededForCurrentLevel > 0 ?
                 Math.round((xpProgressInCurrentLevel / xpNeededForCurrentLevel) * 100) : 100,
-            isMaxLevel: currentLevel === 10
+            isMaxLevel: currentLevel === 10,
+            // Atalhos para compatibilidade
+            level: currentLevel,
+            xpProgressInCurrentLevel,
+            xpNeededForCurrentLevel
         };
     }
 };
 
+// Mapear rank a partir do nível
+function getRankByLevel(level) {
+    if (level >= 8) return 'Senior';
+    if (level >= 4) return 'Pleno';
+    return 'Junior';
+}
+
 // Funções de inicialização e carregamento
 async function initializeApp() {
+    console.log('🔵 [DEBUG] ========== INICIANDO APLICAÇÃO ==========');
+
     // Configurar logout
     setupLogout();
 
@@ -212,6 +225,13 @@ async function initializeApp() {
             loadSubmissions(),
             loadCompletedMissions()
         ]);
+
+        console.log('🔵 [DEBUG] Dados carregados:', {
+            userData,
+            missionsCount: missionsData?.length,
+            submissionsCount: submissionsData?.length,
+            completedMissionsCount: completedMissionsData?.length
+        });
 
         AppState.set('user', userData);
         AppState.set('missions', missionsData);
@@ -394,8 +414,25 @@ async function loadCompletedMissions() {
 }
 
 function updateUserInterface(userData) {
-    // Calcular nível e XP
-    const xpInfo = LevelSystem.calculateLevel(userData.xp || 0);
+    console.log('🔵 [DEBUG] updateUserInterface chamada com:', userData);
+
+    // Usar levelInfo do backend se disponível, senão calcular localmente
+    let xpInfo, rank;
+
+    if (userData.levelInfo) {
+        // Backend já enviou as informações calculadas
+        xpInfo = userData.levelInfo;
+        rank = userData.rank || getRankByLevel(xpInfo.currentLevel);
+        console.log('🔵 [DEBUG] Usando levelInfo do backend');
+    } else {
+        // Fallback: calcular localmente
+        xpInfo = LevelSystem.calculateLevel(userData.xp || 0);
+        rank = getRankByLevel(xpInfo.level || xpInfo.currentLevel);
+        console.log('🔵 [DEBUG] Calculando levelInfo localmente');
+    }
+
+    console.log('🔵 [DEBUG] XP Info:', xpInfo);
+    console.log('🔵 [DEBUG] Rank:', rank);
 
     // Mapeamento dos ícones das classes
     const classIcons = {
@@ -442,17 +479,23 @@ function updateUserInterface(userData) {
     }
 
     // Atualizar elementos da interface
+    // Compatibilidade: suportar ambos formatos (level/currentLevel)
+    const level = xpInfo.level || xpInfo.currentLevel;
+    const xpRemaining = xpInfo.isMaxLevel ? 0 : (xpInfo.nextLevelXP - xpInfo.currentXP);
+
     const elements = {
-        'student-level': `Nível ${xpInfo.level}`,
+        'student-level': `Nível ${level} — ${rank}`,
         'student-class': userData.class || 'Não definida',
         'total-xp': xpInfo.totalXP,
         'current-xp': xpInfo.currentXP,
-        'remaining-for-next': Math.max(0, xpInfo.nextLevelXP - xpInfo.currentXP),
-        'student-year': `${userData.year || 1}º ano`
+        'remaining-for-next': xpRemaining,
+        'student-year': `${userData.year || 1}º ano`,
+        'remaining-xp': xpRemaining
     };
 
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
+        console.log(`🔵 [DEBUG] Atualizando elemento ${id}:`, { element: !!element, value });
         if (element) {
             element.textContent = value;
         }
@@ -462,13 +505,18 @@ function updateUserInterface(userData) {
     const progress = xpInfo.progressPercentage;
     const progressBar = document.getElementById('xp-bar');
     const progressPercentage = document.getElementById('progress-percentage');
-    const remainingXp = document.getElementById('remaining-xp');
 
-    if (progressBar) progressBar.style.width = `${progress}%`;
-    if (progressPercentage) progressPercentage.textContent = `${progress}%`;
-    if (remainingXp) {
-        const xpRemaining = xpInfo.nextLevelXP - xpInfo.currentXP;
-        remainingXp.textContent = xpRemaining > 0 ? xpRemaining : 0;
+    console.log('🔵 [DEBUG] Atualizando barra de progresso:', {
+        progress,
+        progressBar: !!progressBar,
+        progressPercentage: !!progressPercentage
+    });
+
+    if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+    }
+    if (progressPercentage) {
+        progressPercentage.textContent = `${progress}%`;
     }
 }
 

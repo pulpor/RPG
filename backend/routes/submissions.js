@@ -233,10 +233,27 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
     const wasAlreadyCompleted = submission.completed;
     console.log('[DEBUG] Já foi completada antes?', wasAlreadyCompleted);
 
+    // Descobrir XP da missão (fallback quando não estiver presente na submissão)
+    let xpFromMission = 0;
+    try {
+      const missionService = require('../services/missionService');
+      const mission = await missionService.getMissionById(submission.missionId);
+      console.log('[DEBUG] ⭐ Missão encontrada:', mission?.titulo || mission?.title);
+      console.log('[DEBUG] ⭐ XP da missão:', mission?.xp);
+      xpFromMission = mission?.xp || 0;
+    } catch (e) {
+      console.warn('[DEBUG] ⚠️ Não foi possível obter missão para calcular XP, usando fallback 0');
+    }
+
+    const xpToAward = submission.xp || xpFromMission || 0;
+    console.log('[DEBUG] ⭐ XP da submissão:', submission.xp);
+    console.log('[DEBUG] ⭐ XP da missão (fallback):', xpFromMission);
+    console.log('[DEBUG] ⭐ XP FINAL A CONCEDER:', xpToAward);
+
     // Aprovar a submissão
     const reviewData = {
       feedback: feedback || '',
-      xpAwarded: submission.xp || 0
+      xpAwarded: xpToAward
     };
 
     // Manter geminiAnalysis se já existir
@@ -251,9 +268,9 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
     // Atualizar XP apenas se a missão não foi completada antes
     let updatedUser = user;
     if (!wasAlreadyCompleted) {
-      console.log('[DEBUG] Adicionando XP ao usuário:', submission.xp || 0);
+      console.log('[DEBUG] Adicionando XP ao usuário:', xpToAward);
       // Adicionar XP ao usuário
-      updatedUser = await userService.addXP(user.id, submission.xp || 0);
+      updatedUser = await userService.addXP(user.id, xpToAward);
       console.log('[DEBUG] XP adicionado com sucesso');
 
       // Registrar no histórico do usuário
@@ -262,7 +279,7 @@ router.post('/:id/approve', autenticar, ehMestre, async (req, res) => {
         type: 'mission_approved',
         missionId: submission.missionId,
         missionTitle: submission.missionTitle || 'Missão',
-        xpGained: submission.xp || 0,
+        xpGained: xpToAward,
         feedback: feedback || '',
         appliedBy: req.user.userId,
         appliedAt: new Date().toISOString()

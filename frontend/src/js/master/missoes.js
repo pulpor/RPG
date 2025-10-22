@@ -682,7 +682,32 @@ export function renderMissions(missions) {
     return;
   }
 
-  container.innerHTML = missions.map(mission => createMissionCard(mission)).join('');
+  // Helpers para manipular datas vindas em diferentes formatos (ISO, ms, s, Firestore Timestamp)
+  const toDateSafe = (value) => {
+    try {
+      if (!value) return null;
+      if (typeof value?.toDate === 'function') return value.toDate();
+      if (typeof value?.seconds === 'number') return new Date(value.seconds * 1000);
+      if (typeof value === 'number') return new Date(value > 1e12 ? value : value * 1000);
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    } catch {
+      return null;
+    }
+  };
+  const getCreatedAtDate = (m) =>
+    toDateSafe(
+      (m && (m.createdAt ?? m.created_at ?? m.created ?? m.createdOn ?? m.created_time ?? m.createdTimestamp)) || null
+    );
+
+  // Ordenar missões: mais recente primeiro (robusto para vários formatos de data)
+  const sortedMissions = [...missions].sort((a, b) => {
+    const ta = (getCreatedAtDate(a) || new Date(0)).getTime();
+    const tb = (getCreatedAtDate(b) || new Date(0)).getTime();
+    return tb - ta; // Ordem decrescente (mais recente primeiro)
+  });
+
+  container.innerHTML = sortedMissions.map(mission => createMissionCard(mission)).join('');
 
   // ligar botões Editar / Deletar
   container.querySelectorAll('.edit-mission-btn').forEach(btn => {
@@ -740,9 +765,42 @@ function createMissionCard(mission) {
     return turma;
   };
 
+  // Datas seguras (vários formatos)
+  const toDateSafe = (value) => {
+    try {
+      if (!value) return null;
+      if (typeof value?.toDate === 'function') return value.toDate();
+      if (typeof value?.seconds === 'number') return new Date(value.seconds * 1000);
+      if (typeof value === 'number') return new Date(value > 1e12 ? value : value * 1000);
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    } catch {
+      return null;
+    }
+  };
+  const getCreatedAtDate = (m) =>
+    toDateSafe(
+      (m && (m.createdAt ?? m.created_at ?? m.created ?? m.createdOn ?? m.created_time ?? m.createdTimestamp)) || null
+    );
+  const createdDate = getCreatedAtDate(mission);
+  const createdLabel = createdDate
+    ? createdDate.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    : 'Data não disponível';
+
   return `
     <div class="card bg-white p-4 rounded-lg shadow hover:shadow-md transition">
-      <h3 class="font-bold mb-2">${mission.titulo || mission.title || 'Missão sem título'}</h3>
+      <div class="flex justify-between items-start mb-2">
+        <h3 class="font-bold">${mission.titulo || mission.title || 'Missão sem título'}</h3>
+        <span class="text-xs text-gray-500" title="Data de criação">
+          <i class="far fa-calendar-alt mr-1"></i>${createdLabel}
+        </span>
+      </div>
       <p class="text-gray-600 mb-3">${mission.descricao || mission.description || 'Sem descrição'}</p>
       
       <div class="mb-3 flex flex-wrap gap-2">
