@@ -4,7 +4,7 @@
 // Verificar se está em produção (GitHub Pages)
 const isProduction = window.location.hostname.includes('github.io');
 
-export const API_URL = isProduction 
+export const API_URL = isProduction
     ? 'https://rpg-azure.vercel.app' // Backend na Vercel
     : 'http://localhost:3000'; // Desenvolvimento local
 
