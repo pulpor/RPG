@@ -77,7 +77,7 @@ Este documento resume todas as mudanças feitas para preparar o projeto para dep
 **Mudanças:**
 1. **dotenv condicional** - Só carrega .env em desenvolvimento
    ```javascript
-   if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
      require('dotenv').config({ path: path.join(__dirname, '.env') });
    }
    ```
@@ -91,7 +91,7 @@ Este documento resume todas as mudanças feitas para preparar o projeto para dep
 
 3. **Server condicional** - Não inicia servidor em produção (serverless)
    ```javascript
-   if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
      const server = app.listen(port, ...);
    }
    ```

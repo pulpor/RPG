@@ -2,7 +2,7 @@
 // Em desenvolvimento local: usa arquivo .env
 // No Vercel: usa variáveis de ambiente da plataforma
 const path = require('path');
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   require('dotenv').config({ path: path.join(__dirname, '.env') });
 }
 
@@ -134,7 +134,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Iniciar servidor apenas em desenvolvimento local
 // No Vercel, o app é exportado como serverless function
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   const server = app.listen(port, () => {
     console.log(`🚀 Servidor rodando em http://localhost:${port}`);
     console.log('📋 Rotas disponíveis:');
