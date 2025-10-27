@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Mestre - Sistema RPG</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {}
+      }
+    }
+  </script>
+  <style>
+    /* Dark Mode Overrides */
+    .dark .main-content {
+      background: rgba(31, 41, 55, 0.95);
+      border-color: rgba(75, 85, 99, 0.3);
+    }
+    
+    .dark .filter-section {
+      background: rgba(55, 65, 81, 0.5);
+      border-color: rgba(75, 85, 99, 0.3);
+    }
+    
+    .dark .filter-input,
+    .dark .filter-input:focus {
+      background: rgba(31, 41, 55, 0.8);
+      border-color: rgba(107, 114, 128, 0.5);
+      color: #e5e7eb;
+    }
+    
+    .dark .filter-section h3,
+    .dark .filter-section label {
+      color: #e5e7eb;
+    }
+    
+    .dark .student-card,
+    .dark .submission-card,
+    .dark .mission-card {
+      background: rgba(55, 65, 81, 0.8);
+      border-color: rgba(75, 85, 99, 0.5);
+      color: #e5e7eb;
+    }
+    
+    .dark .student-card:hover,
+    .dark .submission-card:hover,
+    .dark .mission-card:hover {
+      background: rgba(55, 65, 81, 0.95);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+  </style>
+
+  <!-- Font Awesome - versão 5 estável -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Font Awesome - versão mais completa -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- CSS Files -->
+
+  <!-- Theme-specific CSS for master panel -->
+  <link rel="icon" type="image/svg+xml" href="/RPG/assets/favicon-DkmguM9O.svg" />
+  <link rel="icon" type="image/png" href="/RPG/assets/favicon-BWadwPoo.png" />
+  <link rel="shortcut icon" href="/RPG/assets/favicon-DgQd7B87.ico" />
+
+  <script type="module" crossorigin src="/RPG/assets/master-BeWSB4x7.js"></script>
+  <link rel="modulepreload" crossorigin href="/RPG/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/RPG/assets/mode-DIhV9zwq.js">
+  <link rel="stylesheet" crossorigin href="/RPG/assets/mode-C2Zplp3V.css">
+  <link rel="stylesheet" crossorigin href="/RPG/assets/master-VWF_ojgf.css">
+  <link rel="stylesheet" crossorigin href="/RPG/assets/helper-CBPrPP0c.css">
+</head>
+
+<body class="bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-black min-h-screen transition-all duration-300 page-container">
+
+  <!-- Navbar Moderna -->
+  <header class="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 dark:from-gray-800 dark:via-gray-900 dark:to-black shadow-2xl fixed w-full top-0 z-[100] page-header">
+    <div class="container mx-auto flex justify-between items-center px-6 py-4 h-full">
+      <div class="flex items-center space-x-4">
+        <div class="profile-icon bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-lg">
+          <i class="fas fa-crown text-xl text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-white mb-2 drop-shadow-lg">Painel do Mestre</h1>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <!-- Botão de Bug Report -->
+        <button
+          id="bug-report-btn"
+          type="button"
+          class="w-10 h-10 bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 border border-white/30 hover:scale-110 hover:shadow-lg cursor-pointer relative z-10"
+          title="Reportar Bug"
+          style="pointer-events: auto;"
+        >
+          <i class="fas fa-bug text-red-500 dark:text-red-400 pointer-events-none"></i>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button
+          id="theme-toggle"
+          type="button"
+          class="w-10 h-10 bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 border border-white/30 hover:scale-110 hover:shadow-lg cursor-pointer relative z-10"
+          title="Alternar tema"
+          style="pointer-events: auto;"
+        >
+          <i id="theme-icon" class="fas fa-moon text-yellow-300 dark:text-yellow-400 pointer-events-none"></i>
+        </button>
+
+        <button id="logout-btn" class="logout-btn bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:scale-105">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Sair</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs de Navegação Modernos -->
+  <div class="tab-header bg-white/50 dark:bg-gray-800/50 backdrop-blur-md border-b border-purple-200 dark:border-gray-700">
+    <div class="container mx-auto flex justify-center space-x-2 px-6 py-4">
+      <button id="tab-pending" class="tab-button dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+        <i class="fas fa-clock mr-2"></i>Pendentes
+      </button>
+      <button id="tab-students" class="tab-button active dark:bg-gradient-to-r dark:from-purple-600 dark:to-purple-800 dark:shadow-purple-900/50">
+        <i class="fas fa-users mr-2"></i>Alunos
+      </button>
+      <button id="tab-submissions" class="tab-button dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+        <i class="fas fa-file-alt mr-2"></i>Submissões
+      </button>
+      <button id="tab-missions" class="tab-button dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+        <i class="fas fa-tasks mr-2"></i>Missões
+      </button>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div class="main-content">
+    <!-- Filtros (mostrados condicionalmente) -->
+    <div id="students-filters" class="filter-section" style="display: none">
+      <h3 class="text-lg font-semibold mb-2">
+        <i class="fas fa-filter mr-2"></i>Filtros de Alunos
+      </h3>
+      <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Turma</label>
+          <select id="student-year-filter"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as turmas</option>
+            <!-- Turmas serão carregadas dinamicamente -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
+          <select id="student-class-filter"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as classes</option>
+            <!-- Classes serão carregadas dinamicamente conforme a área -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nível</label>
+          <select id="student-level-filter"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todos os níveis</option>
+            <option value="1">Nível 1</option>
+            <option value="2">Nível 2</option>
+            <option value="3">Nível 3</option>
+            <option value="4">Nível 4</option>
+            <option value="5">Nível 5</option>
+            <option value="6">Nível 6</option>
+            <option value="7">Nível 7</option>
+            <option value="8">Nível 8</option>
+            <option value="9">Nível 9</option>
+            <option value="10">Nível 10+</option>
+          </select>
+        </div>
+        <div>
+          <button id="apply-student-filters"
+            class="filter-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition mt-6">
+            <i class="fas fa-search mr-2"></i>Aplicar Filtros
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="submissions-filters" class="filter-section" style="display: none">
+      <h3 class="text-lg font-semibold mb-4">
+        <i class="fas fa-filter mr-2"></i>Filtros de Submissões
+      </h3>
+      <div class="filter-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select id="filter-submission-status"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todos os status</option>
+            <option value="pending">Pendente</option>
+            <option value="approved">Aprovado</option>
+            <option value="rejected">Rejeitado</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Turma</label>
+          <select id="filter-submission-turma"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as turmas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
+          <select id="filter-submission-class"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as classes</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Aluno</label>
+          <input type="text" id="filter-submission-student" placeholder="Nome do aluno"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Missão</label>
+          <input type="text" id="filter-submission-mission" placeholder="Nome da missão"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200" />
+        </div>
+        <div>
+          <button id="apply-submission-filters"
+            class="filter-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition mt-6">
+            <i class="fas fa-search mr-2"></i>Aplicar Filtros
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="missions-filters" class="filter-section" style="display: none">
+      <h3 class="text-lg font-semibold mb-4">
+        <i class="fas fa-filter mr-2"></i>Filtros de Missões
+      </h3>
+      <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Turma</label>
+          <select id="filter-mission-turma"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as turmas</option>
+            <!-- Opções de turmas serão populadas dinamicamente via JavaScript -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
+          <select id="filter-mission-class"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="all">Todas as classes</option>
+            <!-- Opções específicas serão populadas pelo JS conforme a área do master -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">XP</label>
+          <select id="filter-mission-xp"
+            class="filter-input w-full p-2 border rounded-lg focus:ring-2 focus:ring-purple-200">
+            <option value="">Todos os XP</option>
+            <option value="0-49">0-49 XP</option>
+            <option value="50-99">50-99 XP</option>
+            <option value="100+">100+ XP</option>
+          </select>
+        </div>
+        <div>
+          <button id="apply-mission-filters"
+            class="filter-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition mt-6">
+            <i class="fas fa-search mr-2"></i>Aplicar Filtros
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conteúdo das Tabs -->
+    <div class="page-content">
+      <div class="contend container mx-auto panel-wrapper">
+        <div class="tabs-wrapper">
+          <!-- Tab: Usuários Pendentes -->
+          <div id="pending-content" class="tab-content">
+            <h2 class="text-xl font-bold mb-2">Usuários Pendentes</h2>
+            <!-- Formulário de criação de turmas -->
+            <div id="turmas-section" class="mb-6">
+              <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <i class="fas fa-users-cog text-blue-600"></i>Minhas Turmas
+              </h3>
+              <form id="form-criar-turma" class="flex flex-col sm:flex-row gap-3 mb-6">
+                <input type="text" id="nome-turma" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Nome da nova turma" required />
+                <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg transition font-medium shadow-md hover:shadow-lg">
+                  <i class="fas fa-plus mr-2"></i>Criar Turma
+                </button>
+              </form>
+
+              <!-- Grid melhorado para turmas -->
+              <div id="lista-turmas" class="mb-4">
+                <!-- Turmas serão renderizadas aqui via JavaScript com layout em grid responsivo -->
+              </div>
+              
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                  <i class="fas fa-info-circle text-blue-600 mt-1"></i>
+                  <div class="text-sm text-blue-800">
+                    <p class="font-medium mb-1">Importante:</p>
+                    <p>Alunos pendentes só podem ser aprovados se forem atribuídos a uma turma existente. Crie ao menos uma turma antes de aprovar usuários.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <i class="fas fa-clock text-yellow-600"></i>Aprovações Pendentes
+              </h3>
+              <div id="pending-users" class="space-y-4">
+                <!-- Conteúdo será carregado via JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Alunos -->
+          <div id="students-content" class="tab-content active">
+            <h2 class="text-xl font-bold mb-4">Gerenciar Alunos</h2>
+            <div class="mb-4 bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fas fa-users"></i>
+                <span>Aqui você pode visualizar todos os alunos aprovados, suas turmas e gerenciar transferências entre turmas.</span>
+              </div>
+            </div>
+            <div id="students-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Conteúdo será carregado via JavaScript -->
+            </div>
+          </div>
+
+          <!-- Tab: Submissões -->
+          <div id="submissions-content" class="tab-content">
+            <h2 class="text-xl font-bold mb-2">Avaliar Submissões</h2>
+            <div id="submissions-list" class="cards-grid">
+              <!-- Conteúdo será carregado via JavaScript -->
+              <div class="card">
+                <h3 class="font-bold mb-2">Exemplo - Submissão</h3>
+                <p class="text-gray-600">Missão: Criar página de login</p>
+                <p class="text-sm text-gray-500 mt-2">Aluno: João Silva</p>
+                <div class="mt-2">
+                  <span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                    Pendente
+                  </span>
+                </div>
+                <div class="mt-4 flex gap-2">
+                  <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                    Aprovar
+                  </button>
+                  <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                    Rejeitar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Missões -->
+          <div id="missions-content" class="tab-content">
+            <h2 class="text-xl font-bold mb-2">Gerenciar Missões</h2>
+
+            <!-- Formulário de Criação/Edição de Missões -->
+            <div class="bg-white p-6 rounded-lg shadow mb-6">
+              <h3 class="text-lg font-semibold mb-4">Criar Nova Missão</h3>
+              <div class="space-y-4">
+                <input id="mission-title" type="text" placeholder="Título da missão"
+                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-200" />
+                <textarea id="mission-description" placeholder="Descrição da missão"
+                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-200" rows="4"></textarea>
+                <input id="mission-xp" type="number" placeholder="XP da missão"
+                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-200" />
+                <select id="mission-turma" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-200">
+                  <option value="">
+                    Turma (opcional - para atribuir a uma turma específica)
+                  </option>
+                  <!-- Opções serão populadas dinamicamente com as turmas criadas em pendentes -->
+                </select>
+
+                <select id="mission-class" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-200">
+                  <option value="geral" selected>Geral (todas as classes)</option>
+
+                  <optgroup label="🖥️ Tecnologia">
+                    <option value="Arqueiro do JavaScript">Arqueiro do JavaScript</option>
+                    <option value="Cafeicultor do Java">Cafeicultor do Java</option>
+                    <option value="Mago do CSS">Mago do CSS</option>
+                    <option value="Paladino do HTML">Paladino do HTML</option>
+                    <option value="Bárbaro do Back-end">Bárbaro do Back-end</option>
+                    <option value="Domador de Dados">Domador de Dados</option>
+                    <option value="Elfo do Front-end">Elfo do Front-end</option>
+                    <option value="Caçador de Bugs">Caçador de Bugs</option>
+                  </optgroup>
+
+                  <optgroup label="👒 Beleza">
+                    <option value="Estilista das Sombras">Estilista das Sombras</option>
+                    <option value="Feiticeira das Unhas">Feiticeira das Unhas</option>
+                    <option value="Encantador de Cores">Encantador de Cores</option>
+                    <option value="Artista das Luzes">Artista das Luzes</option>
+                    <option value="Cortes Fantasma">Cortes Fantasma</option>
+                    <option value="Guardiã das Flores">Guardiã das Flores</option>
+                    <option value="Alquimista do Perfume">Alquimista do Perfume</option>
+                    <option value="Mestre do Reflexo">Mestre do Reflexo</option>
+                  </optgroup>
+
+                  <optgroup label="👨‍🍳 Gastronomia">
+                    <option value="Cozinheiro Arcano">Cozinheiro Arcano</option>
+                    <option value="Alquimista dos Sabores">Alquimista dos Sabores</option>
+                    <option value="Guardiã do Forno">Guardiã do Forno</option>
+                    <option value="Mestre das Caldeiradas">Mestre das Caldeiradas</option>
+                    <option value="Confeiteiro Místico">Confeiteiro Místico</option>
+                    <option value="Senhor dos Temperos">Senhor dos Temperos</option>
+                    <option value="Sommelier Sagrado">Sommelier Sagrado</option>
+                    <option value="Druida da Nutrição">Druida da Nutrição</option>
+                  </optgroup>
+
+                  <optgroup label="👩‍🎓 Gestão">
+                    <option value="Senhor dos Números">Senhor dos Números</option>
+                    <option value="Administrador da Ordem">Administrador da Ordem</option>
+                    <option value="Analista Visionário">Analista Visionário</option>
+                    <option value="Estrategista de Elite">Estrategista de Elite</option>
+                    <option value="Protetor do Equilíbrio">Protetor do Equilíbrio</option>
+                    <option value="Mediador das Alianças">Mediador das Alianças</option>
+                    <option value="Juiz da Justiça">Juiz da Justiça</option>
+                    <option value="Cronista do Progresso">Cronista do Progresso</option>
+                  </optgroup>
+
+                  <optgroup label="👁️ Oftalmologia">
+                    <option value="Vidente da Visão">Vidente da Visão</option>
+                    <option value="Guardiã do Olhar">Guardiã do Olhar</option>
+                    <option value="Caçador de Detalhes">Caçador de Detalhes</option>
+                    <option value="Mestre da Clareza">Mestre da Clareza</option>
+                    <option value="Sentinela Invisível">Sentinela Invisível</option>
+                    <option value="Oráculo das Lentes">Oráculo das Lentes</option>
+                    <option value="Defensor da Retina">Defensor da Retina</option>
+                    <option value="Ilusionista da Percepção">Ilusionista da Percepção</option>
+                  </optgroup>
+
+                  <optgroup label="🌐 Idiomas">
+                    <option value="Orador das Runas">Orador das Runas</option>
+                    <option value="Tradutor das Sombras">Tradutor das Sombras</option>
+                    <option value="Bardo Poliglota">Bardo Poliglota</option>
+                    <option value="Sábio dos Dialetos">Sábio dos Dialetos</option>
+                    <option value="Emissário Universal">Emissário Universal</option>
+                    <option value="Guardião da Palavra">Guardião da Palavra</option>
+                    <option value="Feiticeiro da Pronúncia">Feiticeiro da Pronúncia</option>
+                    <option value="Lexicógrafo Arcano">Lexicógrafo Arcano</option>
+                  </optgroup>
+
+                </select>
+                <div class="flex gap-3">
+                  <button id="create-mission-btn"
+                    class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition font-medium">
+                    <i class="fas fa-plus mr-2"></i>Criar Missão
+                  </button>
+                  <button id="cancel-edit-btn"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition font-medium"
+                    style="display: none">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de Missões Existentes -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+              <h3 class="text-lg font-semibold mb-4">Missões Existentes</h3>
+              <div id="missions-list" class="cards-grid">
+                <!-- Conteúdo será carregado via JavaScript -->
+                <div class="card">
+                  <h3 class="font-bold mb-2">Exemplo - Missão</h3>
+                  <p class="text-gray-600">
+                    Criar página de login responsiva
+                  </p>
+                  <div class="mt-2 flex gap-2">
+                    <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      Fácil
+                    </span>
+                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      50 XP
+                    </span>
+                  </div>
+                  <div class="mt-4 flex gap-2">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                      Editar
+                    </button>
+                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Modal de detalhes de turma melhorado -->
+    <div id="turma-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden" id="turma-modal-content">
+        <!-- Header do modal -->
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
+          <div class="flex justify-between items-center">
+            <div id="turma-modal-title" class="flex items-center gap-3">
+              <!-- Título será preenchido via JS -->
+            </div>
+            <button id="turma-modal-close" class="text-white hover:text-gray-200 text-2xl font-bold p-2 rounded-full hover:bg-white/10 transition">
+              &times;
+            </button>
+          </div>
+          <div id="turma-modal-count" class="mt-2">
+            <!-- Contador será preenchido via JS -->
+          </div>
+        </div>
+
+        <!-- Conteúdo do modal -->
+        <div class="p-6 max-h-96 overflow-y-auto">
+          <h4 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-list"></i>Lista de Alunos
+          </h4>
+          <ul id="turma-modal-list" class="space-y-2">
+            <!-- Lista será preenchida via JS -->
+          </ul>
+        </div>
+
+        <!-- Footer do modal -->
+        <div class="bg-gray-50 px-6 py-4 border-t">
+          <div class="flex justify-end gap-3">
+            <button id="turma-modal-close-btn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg hover:bg-gray-100 transition">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para trocar aluno de turma -->
+    <div id="trocar-turma-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="relative w-full max-w-md bg-white rounded-xl shadow-2xl" id="trocar-turma-modal-content">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-exchange-alt text-blue-600"></i>Trocar Aluno de Turma
+          </h3>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Aluno:</label>
+              <p id="trocar-aluno-nome" class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">
+                <!-- Nome do aluno será preenchido via JS -->
+              </p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Turma atual:</label>
+              <p id="trocar-turma-atual" class="text-gray-600 bg-gray-50 p-3 rounded-lg">
+                <!-- Turma atual será preenchida via JS -->
+              </p>
+            </div>
+            
+            <div>
+              <label for="trocar-nova-turma" class="block text-sm font-medium text-gray-700 mb-2">Nova turma:</label>
+              <select id="trocar-nova-turma" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Selecione a nova turma</option>
+                <!-- Opções serão preenchidas via JS -->
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex gap-3 mt-6">
+            <button id="confirmar-troca-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+              <i class="fas fa-check mr-2"></i>Confirmar
+            </button>
+            <button id="cancelar-troca-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition">
+              <i class="fas fa-times mr-2"></i>Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Bug Report -->
+    <div
+      id="bug-report-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 hidden z-[200] flex items-center justify-center"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4"
+      >
+        <!-- Header do Modal -->
+        <div
+          class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
+        >
+          <h3
+            class="text-lg font-semibold text-gray-900 dark:text-white flex items-center"
+          >
+            <i class="fas fa-bug text-red-600 mr-2"></i>
+            Achou algum bug?
+          </h3>
+          <button
+            id="close-bug-modal"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Corpo do Modal -->
+        <form id="bug-report-form" class="p-6 space-y-4">
+          <div>
+            <label
+              for="bug-title"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Título do Bug *
+            </label>
+            <input
+              type="text"
+              id="bug-title"
+              name="title"
+              required
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Descreva brevemente o problema"
+            />
+          </div>
+
+          <div>
+            <label
+              for="bug-description"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Descrição *
+            </label>
+            <textarea
+              id="bug-description"
+              name="description"
+              required
+              rows="4"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white resize-none"
+              placeholder="Explique em detalhes o que aconteceu"
+            ></textarea>
+          </div>
+
+          <div>
+            <label
+              for="bug-screenshot"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Screenshot (opcional)
+            </label>
+            <input
+              type="file"
+              id="bug-screenshot"
+              name="screenshot"
+              accept="image/*"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Apenas imagens (PNG, JPG, GIF). Máximo 5MB
+            </p>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="flex gap-3 pt-4">
+            <button
+              type="submit"
+              id="submit-bug-report"
+              class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200"
+            >
+              <i class="fas fa-paper-plane mr-2"></i>
+              Enviar
+            </button>
+            <button
+              type="button"
+              id="cancel-bug-report"
+              class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200"
+            >
+              <i class="fas fa-times mr-2"></i>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    
+    <!-- Script para garantir visibilidade dos ícones -->
+    <script>
+      // Executar após o DOM carregar
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeIcon = document.getElementById('theme-icon');
+        if (themeIcon) {
+          // Forçar propriedades inline para garantir visibilidade
+          themeIcon.style.display = 'inline-block';
+          themeIcon.style.opacity = '1';
+          themeIcon.style.visibility = 'visible';
+          themeIcon.style.fontSize = '20px';
+        } else {
+          console.error('[INIT] Ícone do tema NÃO encontrado!');
+        }
+      });
+    </script>
+</body>
+
+</html>

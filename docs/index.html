@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema RPG de Aprendizado - Login</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts - Cinzel para texto mágico -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/RPG/assets/favicon-DkmguM9O.svg" />
+    <link rel="icon" type="image/png" href="/RPG/assets/favicon-BWadwPoo.png" />
+    <link rel="shortcut icon" href="/RPG/assets/favicon-DgQd7B87.ico" />
+
+    <script defer src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script type="module" crossorigin src="/RPG/assets/login-BuUu1Q5B.js"></script>
+    <link rel="modulepreload" crossorigin href="/RPG/assets/modulepreload-polyfill-B5Qt9EMX.js">
+    <link rel="modulepreload" crossorigin href="/RPG/assets/mode-DIhV9zwq.js">
+    <link rel="modulepreload" crossorigin href="/RPG/assets/config-DwtD9ptx.js">
+    <link rel="stylesheet" crossorigin href="/RPG/assets/mode-C2Zplp3V.css">
+    <link rel="stylesheet" crossorigin href="/RPG/assets/login-DQ2URebJ.css">
+  </head>
+
+  <body class="animated-bg font-sans h-screen overflow-hidden">
+    <div class="h-full flex items-center justify-center p-4">
+      <div
+        id="login-screen"
+        class="login-card max-w-md w-full rounded-2xl max-h-full overflow-y-auto"
+      >
+        <div class="theme-toggle-container">
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            aria-label="Alternar tema"
+            onclick="toggleTheme()"
+          >
+            <i id="theme-icon" class="fas fa-moon theme-icon-moon"></i>
+          </button>
+
+          <!-- Wizard com varinha mágica (aparece ao hover) -->
+          <div class="wizard-container">
+            <div class="speech-bubble">
+              <div class="wizard-wand">
+                <div class="wand-stick"></div>
+                <div class="wand-tip"></div>
+                <div class="magic-sparkles">
+                  <span class="sparkle sparkle-1">✨</span>
+                  <span class="sparkle sparkle-2">✨</span>
+                  <span class="sparkle sparkle-3">✨</span>
+                </div>
+              </div>
+              <div class="wizard-spell"></div>
+            </div>
+          </div>
+        </div>
+        <div class="logo-title">
+          <i class="fas fa-dice-d20 logo-icon"></i>
+
+          <h1 class="text-3xl font-bold">
+            Sistema RPG<br /><span class="text-2x1">Educacional</span>
+          </h1>
+        </div>
+        <div id="login-form">
+          <div class="input-group">
+            <input
+              id="username"
+              type="text"
+              placeholder="Nome de usuário"
+              class="input-field"
+            />
+            <i class="fas fa-user input-icon"></i>
+          </div>
+          <div class="input-group">
+            <input
+              id="password"
+              type="password"
+              placeholder="Senha"
+              class="input-field"
+            />
+            <i class="fas fa-lock input-icon"></i>
+            <button
+              type="button"
+              class="toggle-password"
+              onclick="togglePasswordVisibility('password', this)"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <button id="loginButton" class="w-full btn-primary mb-4">
+            <i class="fas fa-sign-in-alt mr-2"></i>
+            Entrar na Aventura
+          </button>
+
+          <a href="cadastro.html"
+            ><button id="registerButton" class="w-full btn-secondary">
+              <i class="fas fa-user-plus mr-2"></i>
+              Criar Nova Conta
+            </button></a
+          >
+          
+          <div class="text-center mt-4">
+            <button
+              id="forgotPasswordBtn"
+              class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              <i class="fas fa-key mr-1"></i>
+              Esqueceu sua senha?
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Recuperação de Senha -->
+    <div
+      id="forgotPasswordModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8"
+      >
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+            <i class="fas fa-key mr-2 text-blue-600"></i>
+            Recuperar Senha
+          </h2>
+          <button
+            id="closeForgotModal"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <i class="fas fa-times text-2xl"></i>
+          </button>
+        </div>
+
+        <p class="text-gray-600 dark:text-gray-300 mb-6">
+          Digite seu email cadastrado. Enviaremos um link para redefinir sua
+          senha.
+        </p>
+
+        <div class="input-group mb-6">
+          <input
+            id="forgotEmail"
+            type="email"
+            placeholder="seu@email.com"
+            class="input-field"
+          />
+          <i class="fas fa-envelope input-icon"></i>
+        </div>
+
+        <button id="sendResetLinkBtn" class="w-full btn-primary">
+          <i class="fas fa-paper-plane mr-2"></i>
+          Enviar Link de Recuperação
+        </button>
+      </div>
+    </div>
+
+  </body>
+</html>

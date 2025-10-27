@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel do Estudante - Sistema RPG</title>
+
+    <!-- Tailwind CSS via CDN (temporário) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome - versão 5 estável -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Font Awesome - versão mais completa -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Fallback para Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v6.5.1/css/all.css"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/RPG/assets/favicon-DkmguM9O.svg" />
+    <link rel="icon" type="image/png" href="/RPG/assets/favicon-BWadwPoo.png" />
+    <link rel="shortcut icon" href="/RPG/assets/favicon-DgQd7B87.ico" />
+    <script type="module" crossorigin src="/RPG/assets/student-DijJhZhl.js"></script>
+    <link rel="modulepreload" crossorigin href="/RPG/assets/modulepreload-polyfill-B5Qt9EMX.js">
+    <link rel="modulepreload" crossorigin href="/RPG/assets/config-DwtD9ptx.js">
+    <link rel="stylesheet" crossorigin href="/RPG/assets/student-Dn9CVooP.css">
+    <link rel="stylesheet" crossorigin href="/RPG/assets/helper-CBPrPP0c.css">
+  </head>
+
+  <body class="bg-white min-h-screen transition-all duration-300">
+    <!-- Header -->
+    <header class="bg-white shadow-lg fixed w-full top-0 z-50 page-header">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-user-graduate text-white text-lg"></i>
+              </div>
+              <h1
+                class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+              >
+                Painel do Estudante
+              </h1>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+              <!-- Botão de Bug Report -->
+              <button
+                id="bug-report-btn"
+                class="w-8 h-8 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 rounded-full flex items-center justify-center transition-all duration-300 mr-2 border border-red-200 dark:border-red-700"
+                title="Reportar Bug"
+              >
+                <i class="fas fa-bug text-red-600 dark:text-red-400"></i>
+              </button>
+
+              <div
+                id="student-class-circle"
+                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center transition-all duration-300"
+              >
+                <i
+                  id="student-class-icon"
+                  class="fas fa-user text-gray-600"
+                ></i>
+              </div>
+
+              <span class="text-gray-600">
+                Olá,
+                <span id="student-name" class="font-semibold text-purple-700"
+                  >Carregando...</span
+                >
+              </span>
+            </div>
+
+            <button
+              id="theme-toggle"
+              class="theme-toggle-header"
+              title="Alternar tema"
+            >
+              <i id="theme-icon" class="fas fa-moon theme-icon-moon"></i>
+            </button>
+
+            <button
+              id="logout-btn"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 page-container">
+      <!-- Progress Section -->
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-6 fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-chart-line mr-2 text-purple-600"></i>
+            Progresso do Estudante
+          </h2>
+          <div class="flex items-center space-x-2">
+            <span
+              id="student-level"
+              class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold"
+              >...</span
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div class="text-center">
+            <div class="gradient-card text-white p-4 rounded-lg progress-card">
+              <i class="fa fa-star text-2xl mb-2"></i>
+              <div class="text-sm opacity-90">XP Total</div>
+              <div id="total-xp" class="text-2xl font-bold">-</div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="gradient-card-green text-white p-4 rounded-lg progress-card"
+            >
+              <i class="fa fa-trophy text-2xl mb-2"></i>
+              <div class="text-sm opacity-90">XP no Nível Atual</div>
+              <div id="current-xp" class="text-2xl font-bold">-</div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="gradient-card-orange text-white p-4 rounded-lg progress-card"
+            >
+              <i class="fa fa-arrow-up text-2xl mb-2"></i>
+              <div class="text-sm opacity-90">Faltam para Próximo</div>
+              <div id="remaining-for-next" class="text-2xl font-bold">-</div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div class="bg-gray-700 text-white p-4 rounded-lg progress-card">
+              <i class="fa fa-graduation-cap text-2xl mb-2"></i>
+              <div class="text-sm opacity-90">Classe</div>
+              <div id="student-class" class="text-lg font-bold">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Progresso para o próximo nível</span>
+            <span id="progress-percentage" class="font-bold text-purple-600"
+              >0%</span
+            >
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div
+              id="xp-bar"
+              class="progress-bar rounded-full transition-all duration-500"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div class="flex justify-between text-sm text-gray-500">
+            <span
+              >Ano: <span id="student-year" class="font-medium">-</span></span
+            >
+            <span
+              >XP necessário para próximo nível:
+              <span id="remaining-xp" class="font-medium">-</span></span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Section -->
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden fade-in">
+        <div class="border-b border-gray-200">
+          <nav class="flex space-x-8 px-6">
+            <button
+              id="tab-missions"
+              class="tab-button py-4 px-2 border-b-2 font-medium transition-colors duration-200 active text-blue-600 border-blue-600"
+            >
+              <i class="fas fa-tasks mr-2"></i>
+              Missões Disponíveis
+            </button>
+            <button
+              id="tab-history"
+              class="tab-button py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium transition-colors duration-200"
+            >
+              <i class="fas fa-history mr-2"></i>
+              Histórico de Submissões
+            </button>
+          </nav>
+        </div>
+
+        <div class="p-6">
+          <!-- Missions Tab -->
+          <div id="missions-tab" class="tab-content">
+            <div class="space-y-6">
+              <!-- Missions Filter Buttons -->
+              <div class="flex flex-wrap gap-3">
+                <button
+                  id="filter-available"
+                  class="mission-filter-btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-all active"
+                >
+                  <i class="fas fa-list-alt mr-2"></i>
+                  Missões Disponíveis
+                  <span
+                    id="available-count"
+                    class="ml-2 bg-blue-800 px-2 py-1 rounded"
+                    >3</span
+                  >
+                </button>
+                <button
+                  id="filter-pending"
+                  class="mission-filter-btn bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium transition-all"
+                >
+                  <i class="fas fa-clock mr-2"></i>
+                  Missões Pendentes
+                  <span
+                    id="pending-count"
+                    class="ml-2 bg-yellow-600 px-2 py-1 rounded"
+                    >3</span
+                  >
+                </button>
+                <button
+                  id="filter-completed"
+                  class="mission-filter-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-all"
+                >
+                  <i class="fas fa-check-circle mr-2"></i>
+                  Missões Concluídas
+                  <span
+                    id="completed-count"
+                    class="ml-2 bg-green-700 px-2 py-1 rounded"
+                    >0</span
+                  >
+                </button>
+              </div>
+
+              <!-- Missions Grid -->
+              <div class="space-y-8" id="missions">
+                <!-- Loading placeholder -->
+                <div class="col-span-full text-center py-12">
+                  <div
+                    class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"
+                  ></div>
+                  <p class="text-gray-500">Carregando missões...</p>
+                </div>
+              </div>
+
+              <!-- Submit Mission -->
+              <div class="bg-white border border-blue-200 rounded-lg p-6">
+                <h3 class="font-bold text-gray-800 mb-4">
+                  <i class="fas fa-upload mr-2 text-blue-600"></i>
+                  Enviar Missão
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      for="mission-select"
+                      class="block font-medium text-gray-700 mb-2"
+                      >Selecionar Missão</label
+                    >
+                    <select
+                      id="mission-select"
+                      class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium text-gray-700 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <option value="">Selecione uma missão para enviar</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      for="code-upload"
+                      class="block font-medium text-gray-700 mb-2"
+                      >Arquivos de Código</label
+                    >
+                    <input
+                      type="file"
+                      id="code-upload"
+                      multiple
+                      accept=".js,.html,.css,.py,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.txt,.json,.xml,.md"
+                      class="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50 hover:bg-white transition-all cursor-pointer text-gray-700"
+                    />
+                  </div>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                  <button
+                    id="submit-code-btn"
+                    class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-lg font-medium transition-all hover:scale-105"
+                  >
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Enviar Código
+                  </button>
+                </div>
+
+                <!-- Informação sobre Feedback Automático -->
+                <div
+                  class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg"
+                >
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                      <i class="fas fa-robot text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-semibold text-blue-800 mb-1">
+                        🤖 Feedback Automático com IA
+                      </h4>
+                      <p class="text-sm text-blue-700">
+                        Após enviar seus arquivos, nossa IA gerará
+                        automaticamente um feedback detalhado sobre seu código,
+                        incluindo pontos positivos, sugestões de melhoria e
+                        recursos para estudo!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Tab -->
+          <div id="history-tab" class="tab-content hidden">
+            <div class="space-y-6">
+              <!-- History Grid -->
+              <div class="space-y-4" id="submission-history">
+                <div class="text-center py-12">
+                  <div
+                    class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"
+                  ></div>
+                  <p class="text-gray-500">Carregando histórico...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal de Bug Report -->
+    <div
+      id="bug-report-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 hidden z-50 flex items-center justify-center"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4"
+      >
+        <!-- Header do Modal -->
+        <div
+          class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
+        >
+          <h3
+            class="text-lg font-semibold text-gray-900 dark:text-white flex items-center"
+          >
+            <i class="fas fa-bug text-red-600 mr-2"></i>
+            Achou algum bug?
+          </h3>
+          <button
+            id="close-bug-modal"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Corpo do Modal -->
+        <form id="bug-report-form" class="p-6 space-y-4">
+          <div>
+            <label
+              for="bug-title"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Título do Bug *
+            </label>
+            <input
+              type="text"
+              id="bug-title"
+              name="title"
+              required
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Descreva brevemente o problema"
+            />
+          </div>
+
+          <div>
+            <label
+              for="bug-description"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Descrição detalhada *
+            </label>
+            <textarea
+              id="bug-description"
+              name="description"
+              required
+              rows="4"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white resize-none"
+              placeholder="Descreva o que aconteceu e como reproduzir..."
+            ></textarea>
+          </div>
+
+          <div>
+            <label
+              for="bug-screenshot"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Screenshot/Print (opcional)
+            </label>
+            <input
+              type="file"
+              id="bug-screenshot"
+              name="screenshot"
+              accept="image/*"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+            />
+          </div>
+
+          <!-- Botões -->
+          <div class="flex gap-3 pt-4">
+            <button
+              type="button"
+              id="cancel-bug-report"
+              class="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="submit-bug-report"
+              class="flex-1 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center justify-center"
+            >
+              <i class="fas fa-paper-plane mr-2"></i>
+              Enviar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+  </body>
+</html>

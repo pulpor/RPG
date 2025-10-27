@@ -1,0 +1,1 @@
+const o=window.location.hostname.includes("github.io")||window.location.hostname.includes("vercel.app")||window.location.hostname!=="localhost",n=o?"https://rpg-azure.vercel.app":"http://localhost:3000",t=o;console.log("🔧 Modo:",t?"PRODUCTION":"DEVELOPMENT");console.log("🌐 API URL:",n);console.log("🌍 Hostname:",window.location.hostname);export{n as A};
