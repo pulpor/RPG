@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "rpg-educacional",
   "builds": [
     {
       "src": "backend/server.js",
@@ -9,7 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/(.*)",
       "dest": "backend/server.js"
     }
   ],
