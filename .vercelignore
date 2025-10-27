@@ -1,0 +1,57 @@
+# Vercel ignore file - arquivos e pastas que não devem ser enviados no deploy
+
+# Development
+.git
+.github
+.vscode
+.idea
+
+# Dependencies
+node_modules
+
+# Environment files (usar variáveis do Vercel)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+!backend/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+logs
+
+# Test files
+test/
+*.test.js
+*.spec.js
+
+# Build artifacts (serão reconstruídos)
+.cache
+.vite
+frontend/.vite
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+
+# Uploads (usar Firebase Storage)
+uploads/
+backend/uploads/
+frontend/uploads/
+
+# Documentation (não necessário em produção)
+README.md
+README-VERCEL.md
+VALIDACOES_EMAIL.md
+Limites.md
+
+# OS files
+.DS_Store
+Thumbs.db

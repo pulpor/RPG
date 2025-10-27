@@ -1,6 +1,10 @@
-// Carregar variáveis de ambiente a partir de backend/.env (caminho absoluto)
+// Carregar variáveis de ambiente
+// Em desenvolvimento local: usa arquivo .env
+// No Vercel: usa variáveis de ambiente da plataforma
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  require('dotenv').config({ path: path.join(__dirname, '.env') });
+}
 
 // Inicializar Firebase (deve ser feito antes de importar as rotas)
 require('./config/firebase');
@@ -22,9 +26,34 @@ const port = 3000;
 // Log rápido para validar a presença da chave em runtime
 console.log('[ENV] GEMINI_API_KEY presente:', process.env.GEMINI_API_KEY ? 'SIM' : 'NÃO');
 
-// Configurar CORS
+// Configurar CORS - permite localhost em dev e domínio do Vercel em produção
+const allowedOrigins = [
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  // Adicione sua URL do Vercel aqui após o deploy
+  // 'https://seu-projeto.vercel.app',
+];
+
+// Em produção no Vercel, aceita o próprio domínio automaticamente
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 app.use(cors({
-  origin: ['http://127.0.0.1:5500', 'http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  origin: function (origin, callback) {
+    // Permite requisições sem origin (como mobile apps ou curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('.vercel.app')) {
+      callback(null, true);
+    } else {
+      console.warn('[CORS] Origin não permitida:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -103,29 +132,35 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Iniciar servidor
-const server = app.listen(port, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${port}`);
-  console.log('📋 Rotas disponíveis:');
-  console.log('   - POST /auth/login');
-  console.log('   - POST /auth/register');
-  console.log('   - GET  /missoes (requer autenticação)');
-  console.log('   - POST /missoes (requer autenticação de mestre)');
-  console.log('   - GET  /usuarios/me (requer autenticação)');
-  console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
-  console.log('✅ Sistema pronto para uso!');
-  console.log('🔥 Firebase Firestore: Conectado');
-  console.log('🤖 Gemini 2.5-Flash: Configurado');
-});
+// Iniciar servidor apenas em desenvolvimento local
+// No Vercel, o app é exportado como serverless function
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const server = app.listen(port, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+    console.log('📋 Rotas disponíveis:');
+    console.log('   - POST /auth/login');
+    console.log('   - POST /auth/register');
+    console.log('   - GET  /missoes (requer autenticação)');
+    console.log('   - POST /missoes (requer autenticação de mestre)');
+    console.log('   - GET  /usuarios/me (requer autenticação)');
+    console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
+    console.log('✅ Sistema pronto para uso!');
+    console.log('🔥 Firebase Firestore: Conectado');
+    console.log('🤖 Gemini 2.5-Flash: Configurado');
+  });
 
-// Aumentar timeout para upload de arquivos (60 segundos)
-server.timeout = 60000;
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
+  // Aumentar timeout para upload de arquivos (60 segundos)
+  server.timeout = 60000;
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
 
-server.on('error', (err) => {
-  console.error('❌ Erro no servidor:', err);
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
-  }
-});
+  server.on('error', (err) => {
+    console.error('❌ Erro no servidor:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
+    }
+  });
+}
+
+// Exportar app para Vercel serverless
+module.exports = app;
