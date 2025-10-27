@@ -75,14 +75,14 @@ function createToast(message, type = 'info', duration = 3000) {
     const toast = document.createElement('div');
     toast.className = `custom-toast ${type}`;
     toast.textContent = message;
-    
+
     document.body.appendChild(toast);
-    
+
     // Remover após duração + tempo de animação
     setTimeout(() => {
         toast.remove();
     }, duration + 300);
-    
+
     return toast;
 }
 

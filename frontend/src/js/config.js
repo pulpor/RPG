@@ -1,17 +1,17 @@
 // Configuração de ambiente para o frontend
 // Detecta automaticamente entre desenvolvimento e produção
 
-export const API_URL = import.meta.env.VITE_API_URL ||
-    (import.meta.env.PROD
-        ? 'https://rpg-azure.vercel.app' // Backend na Vercel
-        : 'http://localhost:3000');
+// Verificar se está em produção (GitHub Pages)
+const isProduction = window.location.hostname.includes('github.io');
 
-export const isDev = import.meta.env.DEV;
-export const isProd = import.meta.env.PROD;
-export const MODE = import.meta.env.MODE;
+export const API_URL = isProduction 
+    ? 'https://rpg-azure.vercel.app' // Backend na Vercel
+    : 'http://localhost:3000'; // Desenvolvimento local
+
+export const isDev = !isProduction;
+export const isProd = isProduction;
 
 // Debug
-if (isDev) {
-    console.log('🔧 Modo:', MODE);
-    console.log('🌐 API URL:', API_URL);
-}
+console.log('🔧 Modo:', isProd ? 'PRODUCTION' : 'DEVELOPMENT');
+console.log('🌐 API URL:', API_URL);
+console.log('🌍 Hostname:', window.location.hostname);
