@@ -317,8 +317,12 @@ function setupLogout() {
             localStorage.removeItem('token');
             localStorage.removeItem('username');
             Toast.show('Logout realizado com sucesso!', 'success');
+            
+            // Detectar base path para redirecionamento correto
+            const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+            
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = `${basePath}/`;
             }, 1000);
         });
     }

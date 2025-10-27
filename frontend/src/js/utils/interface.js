@@ -70,8 +70,12 @@ export function setupLogout() {
             localStorage.removeItem('token');
             localStorage.removeItem('isMaster');
             localStorage.removeItem('username');
+            
+            // Detectar base path para redirecionamento correto
+            const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+            
             // manter outras chaves, como turmas_<username>, para persistir as turmas
-            window.location.href = '/';
+            window.location.href = `${basePath}/`;
         });
     }
 }
