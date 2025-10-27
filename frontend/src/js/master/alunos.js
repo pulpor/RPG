@@ -9,6 +9,16 @@ export let originalStudents = [];
 // Mapeamento de turmas para suas áreas
 let turmaAreaMap = {};
 
+// Mapeamento de username do mestre para área
+const masterAreaMap = {
+  'tecno': 'tecnologia',
+  'gastro': 'gastronomia',
+  'beleza': 'beleza',
+  'gestao': 'gestao',
+  'oftalmo': 'oftalmo',
+  'idioma': 'idiomas'
+};
+
 // Carregar alunos aprovados do backend e filtrar pelo mestre logado
 export async function loadApprovedStudents() {
   try {
@@ -27,6 +37,9 @@ export async function loadApprovedStudents() {
 
     // Construir mapa de turmas para áreas baseado nos alunos
     buildTurmaAreaMap(filtered);
+
+    // Popular filtro de classes baseado na área do mestre
+    populateStudentClassFilterByMaster();
 
     // Carregar turmas no filtro
     await populateStudentTurmaFilter();
@@ -278,7 +291,39 @@ function buildTurmaAreaMap(students) {
   console.log('[FILTROS] Mapa turma-área construído:', turmaAreaMap);
 }
 
-// Função para popular o filtro de classes baseado na turma selecionada
+// Função para popular o filtro de classes baseado na ÁREA DO MESTRE
+export function populateStudentClassFilterByMaster() {
+  const classFilter = document.getElementById('student-class-filter');
+  if (!classFilter) return;
+
+  // Pegar o username do mestre logado
+  const masterUsername = localStorage.getItem('username');
+  if (!masterUsername) {
+    console.warn('[FILTROS] Username do mestre não encontrado');
+    return;
+  }
+
+  // Mapear username -> área
+  const masterArea = masterAreaMap[masterUsername];
+  if (!masterArea || !areasClasses[masterArea]) {
+    console.warn('[FILTROS] Área do mestre não encontrada:', masterUsername);
+    return;
+  }
+
+  console.log(`[FILTROS] Populando classes para mestre ${masterUsername} da área ${masterArea}`);
+
+  // Limpar e popular apenas com classes da área do mestre
+  classFilter.innerHTML = '<option value="all">Todas as classes</option>';
+
+  Object.keys(areasClasses[masterArea].classes).forEach(classe => {
+    const option = document.createElement('option');
+    option.value = classe;
+    option.textContent = classe;
+    classFilter.appendChild(option);
+  });
+}
+
+// Função para popular o filtro de classes baseado na turma selecionada (BACKUP)
 export function populateStudentClassFilter(turma = null) {
   const classFilter = document.getElementById('student-class-filter');
   if (!classFilter) return;
@@ -352,9 +397,6 @@ export async function populateStudentTurmaFilter() {
         if (currentValue && currentValue !== 'all') {
           select.value = currentValue;
         }
-
-        // Popular filtro de classes inicialmente
-        populateStudentClassFilter(currentValue);
       }
     }
   } catch (err) {
@@ -368,13 +410,9 @@ export function setupStudentFilters() {
   const levelFilter = document.getElementById('student-level-filter');
   const applyBtn = document.getElementById('apply-student-filters');
 
-  // Quando mudar a turma, atualizar o filtro de classes
+  // Quando mudar a turma, apenas aplicar os filtros (não mudar as classes disponíveis)
   if (yearFilter) {
-    yearFilter.addEventListener('change', function () {
-      const selectedTurma = yearFilter.value;
-      populateStudentClassFilter(selectedTurma === 'all' ? null : selectedTurma);
-      applyStudentFilters();
-    });
+    yearFilter.addEventListener('change', applyStudentFilters);
   }
 
   [classFilter, levelFilter].forEach(filter => {
