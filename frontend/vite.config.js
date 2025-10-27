@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: './',
+  base: '/RPG/frontend/', // GitHub Pages base path
   build: {
     outDir: '../dist',
     rollupOptions: {
