@@ -1,9 +1,13 @@
 import { apiRequest } from '../utils/auth.js';
 import { showError, showSuccess } from '../utils/toast.js';
 import { showPenaltyRewardModal, showStudentHistoryModal } from '../utils/modals.js';
+import { areasClasses } from '../cadastro.js';
 
 // Armazenamento local dos alunos aprovados
 export let originalStudents = [];
+
+// Mapeamento de turmas para suas áreas
+let turmaAreaMap = {};
 
 // Carregar alunos aprovados do backend e filtrar pelo mestre logado
 export async function loadApprovedStudents() {
@@ -20,6 +24,9 @@ export async function loadApprovedStudents() {
     originalStudents = filtered;
     // manter referência global para módulos que esperam window.originalStudents
     window.originalStudents = originalStudents;
+
+    // Construir mapa de turmas para áreas baseado nos alunos
+    buildTurmaAreaMap(filtered);
 
     // Carregar turmas no filtro
     await populateStudentTurmaFilter();
@@ -251,6 +258,78 @@ export function applyStudentFilters() {
   renderStudents(filtered);
 }
 
+// Função auxiliar para construir o mapa de turma -> área
+function buildTurmaAreaMap(students) {
+  turmaAreaMap = {};
+  students.forEach(student => {
+    const turma = student.turma || student.assignedTurma;
+    const studentClass = student.class;
+
+    if (turma && studentClass) {
+      // Identificar a área pela classe do aluno
+      for (const [areaKey, areaData] of Object.entries(areasClasses)) {
+        if (areaData.classes[studentClass]) {
+          turmaAreaMap[turma] = areaKey;
+          break;
+        }
+      }
+    }
+  });
+  console.log('[FILTROS] Mapa turma-área construído:', turmaAreaMap);
+}
+
+// Função para popular o filtro de classes baseado na turma selecionada
+export function populateStudentClassFilter(turma = null) {
+  const classFilter = document.getElementById('student-class-filter');
+  if (!classFilter) return;
+
+  const currentValue = classFilter.value;
+  classFilter.innerHTML = '<option value="all">Todas as classes</option>';
+
+  if (!turma || turma === 'all') {
+    // Se nenhuma turma específica, mostrar todas as classes de todas as áreas
+    Object.values(areasClasses).forEach(areaData => {
+      Object.keys(areaData.classes).forEach(classe => {
+        const option = document.createElement('option');
+        option.value = classe;
+        option.textContent = classe;
+        classFilter.appendChild(option);
+      });
+    });
+  } else {
+    // Mostrar apenas classes da área correspondente à turma
+    const area = turmaAreaMap[turma];
+    if (area && areasClasses[area]) {
+      Object.keys(areasClasses[area].classes).forEach(classe => {
+        const option = document.createElement('option');
+        option.value = classe;
+        option.textContent = classe;
+        classFilter.appendChild(option);
+      });
+    } else {
+      // Fallback: mostrar todas as classes se não encontrar a área
+      Object.values(areasClasses).forEach(areaData => {
+        Object.keys(areaData.classes).forEach(classe => {
+          const option = document.createElement('option');
+          option.value = classe;
+          option.textContent = classe;
+          classFilter.appendChild(option);
+        });
+      });
+    }
+  }
+
+  // Restaurar valor anterior se ainda existir
+  if (currentValue && currentValue !== 'all') {
+    const optionExists = Array.from(classFilter.options).some(opt => opt.value === currentValue);
+    if (optionExists) {
+      classFilter.value = currentValue;
+    }
+  }
+
+  console.log('[FILTROS] Filtro de classes populado para turma:', turma);
+}
+
 // Função para carregar turmas nos selects de filtro
 export async function populateStudentTurmaFilter() {
   try {
@@ -273,6 +352,9 @@ export async function populateStudentTurmaFilter() {
         if (currentValue && currentValue !== 'all') {
           select.value = currentValue;
         }
+
+        // Popular filtro de classes inicialmente
+        populateStudentClassFilter(currentValue);
       }
     }
   } catch (err) {
@@ -286,7 +368,16 @@ export function setupStudentFilters() {
   const levelFilter = document.getElementById('student-level-filter');
   const applyBtn = document.getElementById('apply-student-filters');
 
-  [yearFilter, classFilter, levelFilter].forEach(filter => {
+  // Quando mudar a turma, atualizar o filtro de classes
+  if (yearFilter) {
+    yearFilter.addEventListener('change', function () {
+      const selectedTurma = yearFilter.value;
+      populateStudentClassFilter(selectedTurma === 'all' ? null : selectedTurma);
+      applyStudentFilters();
+    });
+  }
+
+  [classFilter, levelFilter].forEach(filter => {
     if (filter) {
       filter.addEventListener('change', applyStudentFilters);
     }

@@ -3,6 +3,20 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Animação de fade-in suave para valores carregados */
+@keyframes fadeInValue {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.value-loaded {
+  animation: fadeInValue 0.4s ease-in-out;
+}
+
 /* Efeito de destaque para elementos */
 @keyframes highlightPulse {
   0% {
@@ -118,6 +132,16 @@ html[data-theme="dark"] .text-gray-500 {
 
 html[data-theme="dark"] .text-gray-700 {
   color: #cbd5e0 !important;
+}
+
+/* ===== FIX DEFINITIVO PARA TÍTULOS DOS CARDS ===== */
+/* Força cor escura em light mode e clara em dark mode */
+.mission-card-title {
+  color: #111827 !important; /* gray-900 em light mode */
+}
+
+html[data-theme="dark"] .mission-card-title {
+  color: #f7fafc !important; /* Branco em dark mode */
 }
 
 html[data-theme="dark"] .text-purple-700 {

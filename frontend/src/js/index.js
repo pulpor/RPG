@@ -1,5 +1,6 @@
 // LOGIN + POSICIONAMENTO ÍCONES
 import { showToast } from './utils/toast.js';
+import { API_URL } from './config.js';
 
 // Função de login usando os toasts personalizados
 async function login() {
@@ -12,7 +13,7 @@ async function login() {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/auth/login", {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
@@ -45,6 +46,72 @@ async function login() {
   } catch {
     showToast("Erro de conexão com o servidor.", "error");
   }
+}
+
+// Modal de Recuperação de Senha
+const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+const closeForgotModal = document.getElementById('closeForgotModal');
+const sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
+const forgotEmail = document.getElementById('forgotEmail');
+
+if (forgotPasswordBtn) {
+  forgotPasswordBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    forgotPasswordModal.classList.remove('hidden');
+    forgotPasswordModal.classList.add('flex');
+  });
+}
+
+if (closeForgotModal) {
+  closeForgotModal.addEventListener('click', () => {
+    forgotPasswordModal.classList.add('hidden');
+    forgotPasswordModal.classList.remove('flex');
+    forgotEmail.value = '';
+  });
+}
+
+if (sendResetLinkBtn) {
+  sendResetLinkBtn.addEventListener('click', async () => {
+    const email = forgotEmail.value.trim();
+
+    if (!email) {
+      showToast("Digite seu email!", "error");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast("Email inválido!", "error");
+      return;
+    }
+
+    sendResetLinkBtn.disabled = true;
+    sendResetLinkBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast("Link de recuperação enviado! Confira seu email.", "success");
+        forgotPasswordModal.classList.add('hidden');
+        forgotPasswordModal.classList.remove('flex');
+        forgotEmail.value = '';
+      } else {
+        showToast(data.error || "Erro ao enviar email de recuperação", "error");
+      }
+    } catch (error) {
+      showToast("Erro de conexão com o servidor", "error");
+    } finally {
+      sendResetLinkBtn.disabled = false;
+      sendResetLinkBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Link de Recuperação';
+    }
+  });
 }
 
 const loginButton = document.getElementById("loginButton");

@@ -112,6 +112,18 @@
             <div id="fullname-feedback" class="text-sm mt-1 hidden"></div>
           </div>
 
+          <!-- Email -->
+          <div class="input-group">
+            <input
+              id="reg-email"
+              type="email"
+              placeholder="Email"
+              class="input-field"
+            />
+            <i class="fas fa-envelope input-icon"></i>
+            <div id="email-feedback" class="text-sm mt-1 hidden"></div>
+          </div>
+
           <!-- Senha -->
           <div class="input-group">
             <input
@@ -121,6 +133,13 @@
               class="input-field"
             />
             <i class="fas fa-lock input-icon"></i>
+            <button
+              type="button"
+              class="toggle-password"
+              onclick="togglePasswordVisibility('reg-password', this)"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
             <div id="password-feedback" class="text-sm mt-1 hidden"></div>
           </div>
 
@@ -187,6 +206,22 @@
       import { applyThemeOnLoad, toggleTheme } from "./src/js/mode.js";
       applyThemeOnLoad();
       window.toggleTheme = toggleTheme;
+
+      // Função global para toggle de senha
+      window.togglePasswordVisibility = function (inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector("i");
+
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      };
     </script>
   </body>
 </html>

@@ -115,6 +115,7 @@ function clearRegistrationForm() {
   const fields = [
     'reg-username',
     'reg-fullname',
+    'reg-email',
     'reg-password',
     'curso-select',
     'class-select'
@@ -126,7 +127,7 @@ function clearRegistrationForm() {
       field.classList.remove('has-content');
     }
   });
-  const feedbacks = ['username-feedback', 'fullname-feedback', 'password-feedback', 'password-strength'];
+  const feedbacks = ['username-feedback', 'fullname-feedback', 'email-feedback', 'password-feedback', 'password-strength'];
   feedbacks.forEach(feedbackId => {
     const feedback = document.getElementById(feedbackId);
     if (feedback) {
@@ -206,6 +207,11 @@ function validateFullname(fullname) {
   return fullname.length >= minLength && validFormat;
 }
 
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 function validatePassword(password) {
   return {
     length: password.length >= 8,
@@ -257,6 +263,31 @@ function showFullnameFeedback() {
   }
   if (!validateFullname(fullname)) {
     feedback.textContent = 'Nome completo deve ter pelo menos 3 caracteres e conter apenas letras e espaços.';
+    feedback.classList.remove('hidden');
+    feedback.classList.add('text-red-500');
+  } else {
+    feedback.textContent = '';
+    feedback.classList.add('hidden');
+    feedback.classList.remove('text-red-500');
+  }
+}
+
+function showEmailFeedback() {
+  const emailInput = document.getElementById('reg-email');
+  const feedback = document.getElementById('email-feedback');
+  if (!emailInput || !feedback) {
+    console.error('Elementos reg-email ou email-feedback não encontrados');
+    return;
+  }
+  const email = emailInput.value.trim();
+  if (email.length === 0) {
+    feedback.textContent = '';
+    feedback.classList.add('hidden');
+    feedback.classList.remove('text-red-500');
+    return;
+  }
+  if (!validateEmail(email)) {
+    feedback.textContent = 'Email inválido. Use o formato: exemplo@dominio.com';
     feedback.classList.remove('hidden');
     feedback.classList.add('text-red-500');
   } else {
@@ -341,21 +372,23 @@ function showPasswordFeedback() {
 function validateRegisterFields() {
   const username = document.getElementById('reg-username')?.value.trim();
   const fullname = document.getElementById('reg-fullname')?.value.trim();
+  const email = document.getElementById('reg-email')?.value.trim();
   const password = document.getElementById('reg-password')?.value;
   const curso = document.getElementById('curso-select')?.value;
   const classe = document.getElementById('class-select')?.value;
 
-  if (!username || !fullname || !password || !curso || !classe) {
-    console.log('Campos obrigatórios não preenchidos:', { username, fullname, password, curso, classe });
+  if (!username || !fullname || !email || !password || !curso || !classe) {
+    console.log('Campos obrigatórios não preenchidos:', { username, fullname, email, password, curso, classe });
     return false;
   }
 
   const usernameValid = validateUsername(username);
   const fullnameValid = validateFullname(fullname);
+  const emailValid = validateEmail(email);
   const passwordValid = Object.values(validatePassword(password)).every(Boolean);
 
-  console.log('Validações:', { usernameValid, fullnameValid, passwordValid });
-  return usernameValid && fullnameValid && passwordValid;
+  console.log('Validações:', { usernameValid, fullnameValid, emailValid, passwordValid });
+  return usernameValid && fullnameValid && emailValid && passwordValid;
 }
 
 function updateRegisterButtonState() {
@@ -389,12 +422,13 @@ async function handleRegister() {
   }
   const username = document.getElementById('reg-username').value.trim();
   const fullname = document.getElementById('reg-fullname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   const curso = document.getElementById('curso-select').value;
   const classe = document.getElementById('class-select').value;
   const masterArea = getMasterForArea(curso);
 
-  console.log("[REGISTER FRONT] Dados enviados:", { username, fullname, password, curso, classe, masterArea });
+  console.log("[REGISTER FRONT] Dados enviados:", { username, fullname, email, password, curso, classe, masterArea });
 
   try {
     const res = await fetch('http://localhost:3000/auth/register', {
@@ -403,6 +437,7 @@ async function handleRegister() {
       body: JSON.stringify({
         username,
         fullname,
+        email,
         password,
         curso,
         class: classe,
@@ -441,11 +476,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeEnhancedForms();
   showUsernameFeedback();
   showFullnameFeedback();
+  showEmailFeedback();
   showPasswordFeedback();
   updateRegisterButtonState();
 
   const usernameInput = document.getElementById('reg-username');
   const fullnameInput = document.getElementById('reg-fullname');
+  const emailInput = document.getElementById('reg-email');
   const passwordInput = document.getElementById('reg-password');
   const cursoSelect = document.getElementById('curso-select');
   const classSelect = document.getElementById('class-select');
@@ -469,6 +506,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   } else {
     console.error('Elemento reg-fullname não encontrado');
+  }
+
+  if (emailInput) {
+    emailInput.addEventListener('input', () => {
+      console.log('Input no email');
+      showEmailFeedback();
+      updateRegisterButtonState();
+    });
+  } else {
+    console.error('Elemento reg-email não encontrado');
   }
 
   if (passwordInput) {

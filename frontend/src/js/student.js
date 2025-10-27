@@ -325,16 +325,11 @@ function setupLogout() {
 }
 
 function showLoadingStates() {
-    const elements = ['student-name', 'student-level', 'student-class', 'total-xp', 'current-xp', 'next-level-xp'];
-    elements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = 'Carregando...';
-    });
+    // Não fazer nada - os valores padrão no HTML já mostram "-" como placeholder
 }
 
 function hideLoadingStates() {
-    const loadingElements = document.querySelectorAll('.loading-animation');
-    loadingElements.forEach(el => el.remove());
+    // Não fazer nada - os valores já serão substituídos pela atualização da interface
 }
 
 async function loadUserProfile() {
@@ -498,6 +493,8 @@ function updateUserInterface(userData) {
         console.log(`🔵 [DEBUG] Atualizando elemento ${id}:`, { element: !!element, value });
         if (element) {
             element.textContent = value;
+            // Adicionar animação de fade-in suave
+            element.classList.add('value-loaded');
         }
     });
 
@@ -517,6 +514,7 @@ function updateUserInterface(userData) {
     }
     if (progressPercentage) {
         progressPercentage.textContent = `${progress}%`;
+        progressPercentage.classList.add('value-loaded');
     }
 }
 
@@ -566,6 +564,13 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     // Uma missão está disponível somente se não estiver em nenhuma outra categoria
     const availableMissions = missions.filter(mission => !submittedMissionIds.has(mission.id));
 
+    // Ordenar missões disponíveis por data de criação (mais recentes primeiro)
+    availableMissions.sort((a, b) => {
+        const dateA = parseFirebaseDate(a.createdAt);
+        const dateB = parseFirebaseDate(b.createdAt);
+        return dateB - dateA; // DESC (mais recente primeiro)
+    });
+
     // Buscar as missões com submissões pendentes para mostrar na seção de pendentes
     // IMPORTANTE: Combinamos as informações de missões com suas submissões correspondentes
     const pendingMissions = missions.filter(mission => pendingMissionIds.has(mission.id));
@@ -577,6 +582,13 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         if (submission) {
             mission.submission = submission; // Anexar a submissão à missão para fácil acesso
         }
+    });
+
+    // Ordenar missões pendentes por data de submissão (mais recentes primeiro)
+    pendingMissions.sort((a, b) => {
+        const dateA = a.submission ? parseFirebaseDate(a.submission.submittedAt) : new Date(0);
+        const dateB = b.submission ? parseFirebaseDate(b.submission.submittedAt) : new Date(0);
+        return dateB - dateA; // DESC
     });
 
     console.log('Missões disponíveis:', availableMissions.length);
@@ -608,13 +620,13 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
     pendingSection.className = 'missions-section hidden';
     pendingSection.innerHTML = `
         <div class="mb-6 flex items-center justify-between">
-            <h3 class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center">
+            <h3 class="text-2xl font-bold text-yellow-700 dark:text-yellow-400 flex items-center">
                 <div class="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mr-3 shadow-lg">
                     <i class="fas fa-clock text-white"></i>
                 </div>
                 Missões Pendentes de Avaliação
             </h3>
-            <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-full font-bold text-sm">
+            <span class="bg-yellow-500 dark:bg-yellow-900 text-white dark:text-yellow-200 px-4 py-2 rounded-full font-bold text-sm">
                 ${pendingMissions.length}
             </span>
         </div>
@@ -636,7 +648,7 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
                     <!-- Header com título e XP -->
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1 pr-2">
-                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-1 line-clamp-2">
+                            <h4 class="mission-card-title text-lg font-bold mb-1 line-clamp-2">
                                 ${mission.titulo || mission.title || 'Missão sem título'}
                             </h4>
                             <span class="inline-flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-semibold">
@@ -702,13 +714,20 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
                     </div>
                     Missões Concluídas
                 </h3>
-                <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded-full font-bold text-sm">
+                <span class="bg-green-600 dark:bg-green-900 text-white dark:text-green-200 px-4 py-2 rounded-full font-bold text-sm">
                     ${completedMissions.length}
                 </span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="completed-missions-list"></div>
         `;
         missionsList.appendChild(completedSection);
+
+        // Ordenar missões concluídas por data de conclusão (mais recentes primeiro)
+        completedMissions.sort((a, b) => {
+            const dateA = parseFirebaseDate(a.completedAt || a.submittedAt);
+            const dateB = parseFirebaseDate(b.completedAt || b.submittedAt);
+            return dateB - dateA; // DESC
+        });
 
         const completedList = document.getElementById('completed-missions-list');
         completedMissions.forEach(mission => {
@@ -719,7 +738,7 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
                     <!-- Header com título e XP -->
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1 pr-2">
-                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-1 line-clamp-2">
+                            <h4 class="mission-card-title text-lg font-bold mb-1 line-clamp-2">
                                 ${mission.titulo || mission.title || 'Missão sem título'}
                             </h4>
                             <span class="inline-flex items-center text-xs text-green-600 dark:text-green-400 font-semibold">
@@ -772,13 +791,13 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
         availableSection.className = 'missions-section col-span-full'; // Inicialmente visível
         availableSection.innerHTML = `
             <div class="mb-6 flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-blue-500 dark:text-blue-400 flex items-center">
+                <h2 class="text-2xl font-bold text-blue-700 dark:text-blue-400 flex items-center">
                     <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
                         <i class="fas fa-scroll text-white"></i>
                     </div>
                     Missões Disponíveis
                 </h2>
-                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full font-bold text-sm">
+                <span class="bg-blue-500 dark:bg-blue-900 text-white dark:text-blue-200 px-4 py-2 rounded-full font-bold text-sm">
                     ${availableMissions.length}
                 </span>
             </div>
@@ -815,7 +834,7 @@ function updateMissionsInterface(missions, completedMissions = [], submissions =
                     <!-- Header com título e XP -->
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1 pr-2">
-                            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
+                            <h4 class="mission-card-title text-lg font-bold mb-2 line-clamp-2">
                                 ${mission.titulo || mission.title || 'Missão sem título'}
                             </h4>
                             <span class="inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-semibold">

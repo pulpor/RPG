@@ -248,6 +248,48 @@ class UserService {
             throw error;
         }
     }
+
+    /**
+     * Buscar usuário por email
+     * @param {string} email - Email do usuário
+     * @returns {Promise<Object|null>} - Dados do usuário ou null
+     */
+    async getUserByEmail(email) {
+        try {
+            const q = query(this.usersRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                return { id: userDoc.id, ...userDoc.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao buscar usuário por email:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Buscar usuário por token de recuperação
+     * @param {string} token - Token de recuperação
+     * @returns {Promise<Object|null>} - Dados do usuário ou null
+     */
+    async getUserByResetToken(token) {
+        try {
+            const q = query(this.usersRef, where('resetToken', '==', token));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                return { id: userDoc.id, ...userDoc.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao buscar usuário por token de recuperação:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new UserService();

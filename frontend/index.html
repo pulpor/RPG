@@ -93,11 +93,29 @@
               class="input-field"
             />
             <i class="fas fa-lock input-icon"></i>
+            <button
+              type="button"
+              class="toggle-password"
+              onclick="togglePasswordVisibility('password', this)"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
           </div>
           <button id="loginButton" class="w-full btn-primary mb-4">
             <i class="fas fa-sign-in-alt mr-2"></i>
             Entrar na Aventura
           </button>
+
+          <div class="text-center mb-4">
+            <button
+              id="forgotPasswordBtn"
+              class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              <i class="fas fa-key mr-1"></i>
+              Esqueceu sua senha?
+            </button>
+          </div>
+
           <a href="cadastro.html"
             ><button id="registerButton" class="w-full btn-secondary">
               <i class="fas fa-user-plus mr-2"></i>
@@ -108,10 +126,69 @@
       </div>
     </div>
 
+    <!-- Modal de Recuperação de Senha -->
+    <div
+      id="forgotPasswordModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8"
+      >
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+            <i class="fas fa-key mr-2 text-blue-600"></i>
+            Recuperar Senha
+          </h2>
+          <button
+            id="closeForgotModal"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <i class="fas fa-times text-2xl"></i>
+          </button>
+        </div>
+
+        <p class="text-gray-600 dark:text-gray-300 mb-6">
+          Digite seu email cadastrado. Enviaremos um link para redefinir sua
+          senha.
+        </p>
+
+        <div class="input-group mb-6">
+          <input
+            id="forgotEmail"
+            type="email"
+            placeholder="seu@email.com"
+            class="input-field"
+          />
+          <i class="fas fa-envelope input-icon"></i>
+        </div>
+
+        <button id="sendResetLinkBtn" class="w-full btn-primary">
+          <i class="fas fa-paper-plane mr-2"></i>
+          Enviar Link de Recuperação
+        </button>
+      </div>
+    </div>
+
     <script type="module">
       import { applyThemeOnLoad, toggleTheme } from "./src/js/mode.js";
       applyThemeOnLoad();
       window.toggleTheme = toggleTheme;
+
+      // Função global para toggle de senha
+      window.togglePasswordVisibility = function (inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector("i");
+
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      };
     </script>
   </body>
 </html>
