@@ -36,9 +36,12 @@ async function login() {
         localStorage.setItem("isMaster", data.user.isMaster);
       }
 
+      // Detectar base path para produção (GitHub Pages)
+      const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+
       window.location.href = data.user && data.user.isMaster
-        ? "/src/pages/master.html"
-        : "/src/pages/student.html";
+        ? `${basePath}/src/pages/master.html`
+        : `${basePath}/src/pages/student.html`;
     } else {
       showToast(data.message || "Usuário ou senha inválidos.", "error");
     }
