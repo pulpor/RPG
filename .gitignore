@@ -72,3 +72,4 @@ web/styles/
 
 .vite/
 dist/
+.vercel

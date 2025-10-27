@@ -1,0 +1,33 @@
+⚡ DEPLOY BACKEND VERCEL - COMANDOS RÁPIDOS
+═══════════════════════════════════════════
+
+1️⃣ INSTALAR VERCEL (primeira vez)
+npm install -g vercel
+
+2️⃣ LOGIN
+vercel login
+
+3️⃣ PRIMEIRO DEPLOY
+vercel
+
+4️⃣ COPIAR URL E CONFIGURAR VARIÁVEIS
+https://vercel.com → Project → Settings → Environment Variables
+
+5️⃣ DEPLOY PRODUÇÃO
+vercel --prod
+
+6️⃣ ATUALIZAR CONFIG.JS
+frontend/src/js/config.js → Cole a URL do Vercel
+
+7️⃣ BUILD FRONTEND
+cd frontend
+npm run build
+cd ..
+
+8️⃣ COMMIT TUDO
+git add .
+git commit -m "🚀 Deploy completo"
+git push origin main
+
+✅ TESTAR
+https://pulpor.github.io/RPG/frontend/

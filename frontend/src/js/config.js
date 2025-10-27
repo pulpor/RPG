@@ -3,7 +3,7 @@
 
 export const API_URL = import.meta.env.VITE_API_URL ||
     (import.meta.env.PROD
-        ? 'https://seu-backend.vercel.app' // ALTERE para sua URL do backend
+        ? 'https://rpg-azure.vercel.app' // Backend na Vercel
         : 'http://localhost:3000');
 
 export const isDev = import.meta.env.DEV;
