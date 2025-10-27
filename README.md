@@ -395,20 +395,66 @@ node test/test-email.js
 
 ---
 
-## 🚀 Deploy
+## 🚀 Deploy no Vercel
 
-### **Vercel (Backend)**
+Este projeto está **pronto para deploy** no Vercel! Toda a configuração já foi feita.
+
+### 📖 Guias de Deploy
+
+Escolha o guia de acordo com seu nível de experiência:
+
+- **🚀 Iniciante?** → [VERCEL-QUICKSTART.md](VERCEL-QUICKSTART.md) - Setup em 5 minutos
+- **📚 Guia Completo** → [README-VERCEL.md](README-VERCEL.md) - Tudo que você precisa saber
+- **✅ Checklist** → [DEPLOY-CHECKLIST.md](DEPLOY-CHECKLIST.md) - Não esqueça nada
+
+### ⚡ Deploy Rápido
+
+1. **Criar conta**: [vercel.com](https://vercel.com)
+2. **Importar** este repositório do GitHub
+3. **Configurar** variáveis de ambiente (Firebase, Gemini, JWT)
+4. **Deploy!** 🎉
+
 ```bash
-# O projeto já está configurado com vercel.json
-vercel --prod
+# Configurações básicas no Vercel:
+Framework Preset: Other
+Build Command: cd frontend && npm install && npm run build
+Output Directory: frontend/dist
+Install Command: npm install
 ```
 
-### **Vercel/Netlify (Frontend)**
-```bash
-cd frontend
-npm run build
-# Deploy da pasta dist/
+### 🔐 Variáveis de Ambiente Necessárias
+
+Configure no **Vercel Dashboard → Settings → Environment Variables**:
+
+```env
+# Firebase
+FIREBASE_PROJECT_ID=seu-projeto-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk@...
+
+# Google Gemini
+GEMINI_API_KEY=sua-chave-aqui
+
+# Segurança
+JWT_SECRET=sua-chave-secreta (gere com crypto.randomBytes)
+
+# URLs (após primeiro deploy)
+VITE_API_URL=https://seu-projeto.vercel.app
+FRONTEND_URL=https://seu-projeto.vercel.app
 ```
+
+### 📊 O que já está configurado
+
+- ✅ `vercel.json` - Configuração de build e rotas
+- ✅ `.vercelignore` - Otimização de deploy
+- ✅ CORS automático para `.vercel.app`
+- ✅ Build scripts otimizados
+- ✅ Serverless functions prontas
+- ✅ Frontend build configurado
+
+### 🆘 Problemas?
+
+Consulte a seção **"Problemas Comuns e Soluções"** em [README-VERCEL.md](README-VERCEL.md)
 
 ---
 

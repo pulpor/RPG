@@ -3,6 +3,13 @@
   "name": "rpg-educacional",
   "builds": [
     {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
       "src": "backend/server.js",
       "use": "@vercel/node"
     }
@@ -11,6 +18,42 @@
     {
       "src": "/api/(.*)",
       "dest": "backend/server.js"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/missoes/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/usuarios/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/submissoes/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/gemini/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/turmas/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/files/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/dist/$1"
     }
   ],
   "env": {
