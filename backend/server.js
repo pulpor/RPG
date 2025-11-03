@@ -17,7 +17,7 @@ const turmasRotas = require('./routes/turmas');
 const bugReportEmailRotas = require('./routes/bugReportEmail');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Log rápido para validar a presença da chave em runtime
 console.log('[ENV] GEMINI_API_KEY presente:', process.env.GEMINI_API_KEY ? 'SIM' : 'NÃO');
@@ -30,7 +30,9 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
-    'https://pulpor.github.io' // GitHub Pages
+    'https://pulpor.github.io', // GitHub Pages
+    'https://rpg-azure.vercel.app', // Vercel frontend
+    /\.vercel\.app$/ // Qualquer preview deploy da Vercel
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -138,3 +140,6 @@ server.on('error', (err) => {
     console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
   }
 });
+
+// Exportar o app para o Vercel
+module.exports = app;
