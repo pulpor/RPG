@@ -72,6 +72,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint (sem autenticação)
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    firebase: '✅',
+    gemini: process.env.GEMINI_API_KEY ? '✅' : '❌'
+  });
+});
+
 // Configurar rotas
 console.log('[SERVER] Configurando rotas...');
 app.use('/auth', autenticacaoRotas);
