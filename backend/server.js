@@ -114,32 +114,34 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Iniciar servidor
-const server = app.listen(port, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${port}`);
-  console.log('📋 Rotas disponíveis:');
-  console.log('   - POST /auth/login');
-  console.log('   - POST /auth/register');
-  console.log('   - GET  /missoes (requer autenticação)');
-  console.log('   - POST /missoes (requer autenticação de mestre)');
-  console.log('   - GET  /usuarios/me (requer autenticação)');
-  console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
-  console.log('✅ Sistema pronto para uso!');
-  console.log('🔥 Firebase Firestore: Conectado');
-  console.log('🤖 Gemini 2.5-Flash: Configurado');
-});
+// Iniciar servidor apenas em ambiente standalone (não serverless)
+if (require.main === module) {
+  const server = app.listen(port, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+    console.log('📋 Rotas disponíveis:');
+    console.log('   - POST /auth/login');
+    console.log('   - POST /auth/register');
+    console.log('   - GET  /missoes (requer autenticação)');
+    console.log('   - POST /missoes (requer autenticação de mestre)');
+    console.log('   - GET  /usuarios/me (requer autenticação)');
+    console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
+    console.log('✅ Sistema pronto para uso!');
+    console.log('🔥 Firebase Firestore: Conectado');
+    console.log('🤖 Gemini 2.5-Flash: Configurado');
+  });
 
-// Aumentar timeout para upload de arquivos (60 segundos)
-server.timeout = 60000;
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
+  // Aumentar timeout para upload de arquivos (60 segundos)
+  server.timeout = 60000;
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
 
-server.on('error', (err) => {
-  console.error('❌ Erro no servidor:', err);
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
-  }
-});
+  server.on('error', (err) => {
+    console.error('❌ Erro no servidor:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Porta ${port} já está em uso. Tente fechar outros processos ou use outra porta.`);
+    }
+  });
+}
 
-// Exportar o app para o Vercel
+// Exportar o app (necessário para Vercel Serverless Functions)
 module.exports = app;
