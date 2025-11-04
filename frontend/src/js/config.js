@@ -13,7 +13,8 @@ export const API_URL = isProduction
 export const isDev = !isProduction;
 export const isProd = isProduction;
 
-// Debug
+// Debug - Build v2.0
 console.log('🔧 Modo:', isProd ? 'PRODUCTION' : 'DEVELOPMENT');
 console.log('🌐 API URL:', API_URL);
 console.log('🌍 Hostname:', window.location.hostname);
+console.log('📦 Build:', '2.0');
