@@ -1,6 +1,5 @@
 import { showSuccess, showError, showWarning } from './toast.js';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../config.js';
 
 export function isTokenValid() {
     const token = localStorage.getItem('token');

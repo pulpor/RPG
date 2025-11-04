@@ -1,5 +1,6 @@
 import { apiRequest } from '../utils/auth.js';
 import { showError, showSuccess } from '../utils/toast.js';
+import { API_URL } from '../config.js';
 
 export let originalMissions = [];
 export let originalSubmissions = [];
@@ -65,7 +66,7 @@ export function openFileWithPreview(fileUrl, fileName = 'arquivo') {
       const token = localStorage.getItem('token');
 
       // Criar URL do proxy com token na URL (para evitar problemas de CORS com headers)
-      const proxyUrl = `http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
+      const proxyUrl = `${API_URL}/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
 
       // Usar o proxy que criamos no backend (contorna CORS)
       console.log('📡 Usando proxy para arquivo Firebase:', proxyUrl);
@@ -152,7 +153,7 @@ function openCodePreview(fileUrl, fileName, extension) {
       const token = localStorage.getItem('token');
 
       // Criar URL do proxy com token na URL
-      const proxyUrl = `http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
+      const proxyUrl = `${API_URL}/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`;
       console.log('📡 Usando proxy para arquivo Firebase no preview:', proxyUrl);
       fileUrl = proxyUrl;
     }
@@ -212,7 +213,7 @@ export async function downloadFileSecurely(fileUrl, fileName) {
       showSuccess('Preparando download...');
 
       // Usar fetch com o token para buscar o arquivo via proxy
-      const response = await fetch(`http://localhost:3000/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`);
+      const response = await fetch(`${API_URL}/files/proxy?url=${encodeURIComponent(fileUrl)}&token=${token}`);
 
       if (!response.ok) {
         throw new Error(`Erro ao baixar arquivo: ${response.status} ${response.statusText}`);

@@ -97,9 +97,6 @@ const Toast = {
     }
 };
 
-// Configuração da API
-const API_URL = 'http://localhost:3000'; // Altere isso para a URL correta do seu backend
-
 // Função auxiliar para fazer requisições à API
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
@@ -1048,7 +1045,7 @@ function setupMissionSubmission() {
 
             console.log('📤 Iniciando requisição POST para /submissoes/submit');
 
-            const response = await fetch(`http://localhost:3000/submissoes/submit`, {
+            const response = await fetch(`${API_URL}/submissoes/submit`, {
                 method: 'POST',
                 body: formData, // FormData já é tratado corretamente pelo navegador
                 headers: {
@@ -1646,7 +1643,7 @@ async function handleBugReportSubmit(e) {
         console.log('[BUG REPORT] Enviando para o backend...');
 
         // Enviar para o backend próprio
-        const response = await fetch('http://localhost:3000/api/bug-report', {
+        const response = await fetch(`${API_URL}/api/bug-report`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

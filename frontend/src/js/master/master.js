@@ -1,4 +1,5 @@
 // Orquestrador mínimo do painel master
+import { API_URL } from '../config.js';
 
 // Importar módulos utilitários 
 import { validateAuthentication, apiRequest } from '../utils/auth.js';
@@ -441,7 +442,7 @@ async function handleBugReportSubmit(e) {
 		console.log('[BUG REPORT] Enviando para o backend...');
 
 		// Enviar para o backend próprio
-		const response = await fetch('http://localhost:3000/api/bug-report', {
+		const response = await fetch(`${API_URL}/api/bug-report`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

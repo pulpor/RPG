@@ -1,9 +1,10 @@
 // Sistema de Feedback Automático com Gemini AI
 // Arquivo: gemini.js
+import { API_URL } from '../config.js';
 
 export class GeminiAPI {
     constructor() {
-        this.baseUrl = 'http://localhost:3000/gemini';
+        this.baseUrl = `${API_URL}/gemini`;
     }
 
     /**

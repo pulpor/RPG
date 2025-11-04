@@ -1,3 +1,6 @@
+// Importar configuração
+import { API_URL } from './config.js';
+
 // Efeito de rolar o dado ao clicar na tela de cadastro
 document.addEventListener('DOMContentLoaded', () => {
   const diceIcon = document.querySelector('.logo-icon');
@@ -431,7 +434,7 @@ async function handleRegister() {
   console.log("[REGISTER FRONT] Dados enviados:", { username, fullname, email, password, curso, classe, masterArea });
 
   try {
-    const res = await fetch('http://localhost:3000/auth/register', {
+    const res = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
