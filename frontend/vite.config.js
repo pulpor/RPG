@@ -4,7 +4,7 @@ export default defineConfig({
   root: './',
   base: '/RPG/', // GitHub Pages base path (raiz do projeto)
   build: {
-    outDir: './dist', // Build dentro do frontend
+    outDir: '../docs', // Build direto para docs (GitHub Pages)
     emptyOutDir: true, // Limpar pasta antes do build
     rollupOptions: {
       input: {
