@@ -15,6 +15,7 @@ const submissoesRotas = require('./routes/submissions');
 const geminiRotas = require('./routes/gemini');
 const turmasRotas = require('./routes/turmas');
 const bugReportEmailRotas = require('./routes/bugReportEmail');
+const debugRotas = require('./routes/debug');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -92,6 +93,7 @@ app.use('/submissoes', submissoesRotas);
 app.use('/gemini', geminiRotas);
 app.use('/turmas', turmasRotas);
 app.use('/api', bugReportEmailRotas);
+app.use('/debug', debugRotas);
 app.use('/files', require('./routes/files'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 console.log('[SERVER] ✅ Rotas configuradas');
