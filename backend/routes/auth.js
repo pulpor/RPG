@@ -106,33 +106,47 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  console.log("[LOGIN] username recebido:", username);
+  try {
+    const { username, password } = req.body;
+    console.log("[LOGIN] username recebido:", username);
 
-  // Buscar usuário do Firebase
-  const user = await userService.getUserByUsername(username);
-  console.log("[LOGIN] usuário encontrado:", user ? user.username : null);
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username e senha são obrigatórios' });
+    }
 
-  if (!user) {
-    console.log("[LOGIN] Usuário não encontrado.");
-    return res.status(401).json({ error: 'Credenciais inválidas' });
+    // Buscar usuário do Firebase
+    const user = await userService.getUserByUsername(username);
+    console.log("[LOGIN] usuário encontrado:", user ? user.username : null);
+
+    if (!user) {
+      console.log("[LOGIN] Usuário não encontrado.");
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log("[LOGIN] senha recebida:", password);
+    console.log("[LOGIN] senha hash:", user.password);
+    console.log("[LOGIN] senha confere?", passwordMatch);
+
+    if (!passwordMatch) {
+      console.log("[LOGIN] Senha inválida.");
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    if (user.pending && !user.isMaster) {
+      return res.status(403).json({ error: 'Cadastro pendente de aprovação pelo mestre' });
+    }
+    
+    const token = jwt.sign({ userId: user.id, isMaster: user.isMaster }, secret, { expiresIn: '1d' });
+    res.json({ user: { ...user, password: undefined }, token });
+  } catch (error) {
+    console.error('[LOGIN] Erro no login:', error);
+    res.status(500).json({ 
+      error: 'Erro interno no servidor',
+      message: error.message,
+      hint: 'Verifique se as variáveis de ambiente do Firebase estão configuradas'
+    });
   }
-
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  console.log("[LOGIN] senha recebida:", password);
-  console.log("[LOGIN] senha hash:", user.password);
-  console.log("[LOGIN] senha confere?", passwordMatch);
-
-  if (!passwordMatch) {
-    console.log("[LOGIN] Senha inválida.");
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-
-  if (user.pending && !user.isMaster) {
-    return res.status(403).json({ error: 'Cadastro pendente de aprovação pelo mestre' });
-  }
-  const token = jwt.sign({ userId: user.id, isMaster: user.isMaster }, secret, { expiresIn: '1d' });
-  res.json({ user: { ...user, password: undefined }, token });
 });
 
 // Adicione esta rota para retornar todos os usuários em JSON

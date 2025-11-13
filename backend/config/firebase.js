@@ -45,7 +45,9 @@ try {
     console.log(`   Storage: ${firebaseConfig.storageBucket}`);
 } catch (error) {
     console.error('❌ Erro ao inicializar Firebase:', error.message);
-    process.exit(1);
+    console.error('⚠️  O servidor continuará rodando mas as rotas que dependem do Firebase falharão');
+    console.error('⚠️  Configure as variáveis de ambiente do Firebase na Vercel!');
+    // Não fazer process.exit(1) para não crashear serverless
 }
 
 module.exports = {
