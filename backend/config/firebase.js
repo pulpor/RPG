@@ -1,56 +1,69 @@
-// Configuração do Firebase para Node.js
-const { initializeApp } = require('firebase/app');
-const { getFirestore } = require('firebase/firestore');
-const { getStorage } = require('firebase/storage');
+// Configuração do Firebase Admin SDK para Node.js (Backend)
+const admin = require('firebase-admin');
 require('dotenv').config();
 
 // Configuração do Firebase a partir das variáveis de ambiente
 const firebaseConfig = {
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+    }),
     projectId: process.env.FIREBASE_PROJECT_ID,
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID,
 };
 
 // Validar configuração
 const validateConfig = () => {
-    const required = ['apiKey', 'authDomain', 'projectId', 'appId', 'storageBucket'];
-    const missing = required.filter(key => !firebaseConfig[key]);
+    const required = ['projectId', 'storageBucket'];
+    const missing = required.filter(key => !process.env[`FIREBASE_${key.toUpperCase()}`] && key !== 'storageBucket');
 
-    if (missing.length > 0) {
-        console.error('❌ Configuração do Firebase incompleta!');
-        console.error('   Faltando no .env:', missing.join(', '));
-        console.error('   Configure em: backend/.env');
+    if (!process.env.FIREBASE_PROJECT_ID) {
+        console.error('❌ FIREBASE_PROJECT_ID está faltando!');
         throw new Error('Firebase configuration incomplete');
     }
 
-    console.log('✅ Configuração do Firebase validada');
-    return true;
+    // Se não tem credenciais Admin, tenta usar as variáveis padrão
+    if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+        console.warn('⚠️  Credenciais Admin não encontradas, tentando Application Default Credentials...');
+        return 'default';
+    }
+
+    console.log('✅ Configuração do Firebase Admin validada');
+    return 'custom';
 };
 
-// Inicializar Firebase
+// Inicializar Firebase Admin
 let app, db, storage;
 
 try {
-    validateConfig();
+    const configType = validateConfig();
+    
+    if (configType === 'default') {
+        // Inicializar com credenciais padrão (funciona na Vercel se configurado corretamente)
+        app = admin.initializeApp({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+        });
+    } else {
+        // Inicializar com service account
+        app = admin.initializeApp(firebaseConfig);
+    }
 
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    storage = getStorage(app);
+    db = admin.firestore();
+    storage = admin.storage();
 
-    console.log('✅ Firebase inicializado com sucesso');
-    console.log(`   Projeto: ${firebaseConfig.projectId}`);
-    console.log(`   Storage: ${firebaseConfig.storageBucket}`);
+    console.log('✅ Firebase Admin inicializado com sucesso');
+    console.log(`   Projeto: ${process.env.FIREBASE_PROJECT_ID}`);
+    console.log(`   Storage: ${process.env.FIREBASE_STORAGE_BUCKET}`);
 } catch (error) {
-    console.error('❌ Erro ao inicializar Firebase:', error.message);
+    console.error('❌ Erro ao inicializar Firebase Admin:', error.message);
     console.error('⚠️  O servidor continuará rodando mas as rotas que dependem do Firebase falharão');
     console.error('⚠️  Configure as variáveis de ambiente do Firebase na Vercel!');
-    // Não fazer process.exit(1) para não crashear serverless
 }
 
 module.exports = {
+    admin,
     app,
     db,
     storage,

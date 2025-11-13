@@ -1,23 +1,9 @@
-// Serviço de Usuários com Firebase Firestore
-const {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-    serverTimestamp,
-    writeBatch
-} = require('firebase/firestore');
+// Serviço de Usuários com Firebase Admin SDK
 const { db } = require('../config/firebase');
 
 class UserService {
     constructor() {
         this.collectionName = 'users';
-        this.usersRef = collection(db, this.collectionName);
     }
 
     /**
@@ -27,20 +13,21 @@ class UserService {
      */
     async createUser(userData) {
         try {
-            const userDoc = doc(this.usersRef);
+            const usersRef = db.collection(this.collectionName);
+            const userDoc = usersRef.doc();
             const userId = userDoc.id;
 
             const newUser = {
                 ...userData,
                 id: userId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
                 xp: userData.xp || 0,
                 level: userData.level || 1,
                 approved: userData.approved ?? false
             };
 
-            await setDoc(userDoc, newUser);
+            await userDoc.set(newUser);
             console.log(`✅ Usuário criado: ${userData.username} (${userId})`);
 
             return { ...newUser, id: userId };
@@ -57,11 +44,10 @@ class UserService {
      */
     async getUserById(userId) {
         try {
-            const userDoc = doc(db, this.collectionName, userId);
-            const userSnap = await getDoc(userDoc);
+            const userDoc = await db.collection(this.collectionName).doc(userId).get();
 
-            if (userSnap.exists()) {
-                return { id: userSnap.id, ...userSnap.data() };
+            if (userDoc.exists) {
+                return { id: userDoc.id, ...userDoc.data() };
             }
             return null;
         } catch (error) {
@@ -77,11 +63,13 @@ class UserService {
      */
     async getUserByUsername(username) {
         try {
-            const q = query(this.usersRef, where('username', '==', username));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await db.collection(this.collectionName)
+                .where('username', '==', username)
+                .limit(1)
+                .get();
 
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
+            if (!snapshot.empty) {
+                const userDoc = snapshot.docs[0];
                 return { id: userDoc.id, ...userDoc.data() };
             }
             return null;
@@ -98,23 +86,23 @@ class UserService {
      */
     async getAllUsers(filters = {}) {
         try {
-            let q = this.usersRef;
+            let query = db.collection(this.collectionName);
 
             // Aplicar filtros
             if (filters.isMaster !== undefined) {
-                q = query(q, where('isMaster', '==', filters.isMaster));
+                query = query. where('isMaster', '==', filters.isMaster));
             }
             if (filters.approved !== undefined) {
-                q = query(q, where('approved', '==', filters.approved));
+                query = query. where('approved', '==', filters.approved));
             }
             if (filters.masterUsername) {
-                q = query(q, where('masterUsername', '==', filters.masterUsername));
+                query = query. where('masterUsername', '==', filters.masterUsername));
             }
 
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
             const users = [];
 
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 users.push({ id: doc.id, ...doc.data() });
             });
 
@@ -257,10 +245,10 @@ class UserService {
     async getUserByEmail(email) {
         try {
             const q = query(this.usersRef, where('email', '==', email));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
 
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
+            if (!snapshot.empty) {
+                const userDoc = snapshot.docs[0];
                 return { id: userDoc.id, ...userDoc.data() };
             }
             return null;
@@ -278,10 +266,10 @@ class UserService {
     async getUserByResetToken(token) {
         try {
             const q = query(this.usersRef, where('resetToken', '==', token));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
 
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
+            if (!snapshot.empty) {
+                const userDoc = snapshot.docs[0];
                 return { id: userDoc.id, ...userDoc.data() };
             }
             return null;
