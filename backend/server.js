@@ -23,24 +23,54 @@ const port = process.env.PORT || 3000;
 // Log rápido para validar a presença da chave em runtime
 console.log('[ENV] GEMINI_API_KEY presente:', process.env.GEMINI_API_KEY ? 'SIM' : 'NÃO');
 
-// Configurar CORS
+// CORS deve vir PRIMEIRO antes de qualquer outra coisa
 app.use(cors({
-  origin: [
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'https://pulpor.github.io', // GitHub Pages
-    'https://rpg-azure.vercel.app', // Vercel frontend
-    /\.vercel\.app$/ // Qualquer preview deploy da Vercel
-  ],
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'https://pulpor.github.io',
+      'https://rpg-azure.vercel.app'
+    ];
+    
+    // Permitir requisições sem origin (mobile apps, postman, etc)
+    if (!origin) return callback(null, true);
+    
+    // Verificar se origin está na lista OU termina com vercel.app
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || origin.includes('github.io')) {
+      callback(null, true);
+    } else {
+      console.log('❌ Origin bloqueada:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
+
+// Adicionar headers CORS manualmente como backup
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (origin.includes('github.io') || origin.includes('vercel.app') || origin.includes('localhost'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  // Responder imediatamente para OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  
+  next();
+});
 
 // limite de payload para upload de arquivos
 app.use(express.json({ limit: '50mb' }));
