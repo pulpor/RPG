@@ -90,13 +90,13 @@ class UserService {
 
             // Aplicar filtros
             if (filters.isMaster !== undefined) {
-                query = query. where('isMaster', '==', filters.isMaster));
+                query = query.where('isMaster', '==', filters.isMaster);
             }
             if (filters.approved !== undefined) {
-                query = query. where('approved', '==', filters.approved));
+                query = query.where('approved', '==', filters.approved);
             }
             if (filters.masterUsername) {
-                query = query. where('masterUsername', '==', filters.masterUsername));
+                query = query.where('masterUsername', '==', filters.masterUsername);
             }
 
             const snapshot = await query.get();

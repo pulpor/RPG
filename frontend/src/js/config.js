@@ -6,12 +6,20 @@ const isProduction = window.location.hostname.includes('github.io') ||
     window.location.hostname.includes('vercel.app') ||
     window.location.hostname !== 'localhost';
 
-export const API_URL = isProduction
+const API_URL = isProduction
     ? 'https://rpg-azure.vercel.app' // Backend na Vercel
     : 'http://localhost:3000'; // Desenvolvimento local
 
-export const isDev = !isProduction;
-export const isProd = isProduction;
+const isDev = !isProduction;
+const isProd = isProduction;
+
+// Exportar para módulos ES6
+export { API_URL, isDev, isProd };
+
+// Também disponibilizar globalmente para compatibilidade
+window.API_URL = API_URL;
+window.isDev = isDev;
+window.isProd = isProd;
 
 // Debug - Build v2.0
 console.log('🔧 Modo:', isProd ? 'PRODUCTION' : 'DEVELOPMENT');

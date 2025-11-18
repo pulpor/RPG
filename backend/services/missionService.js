@@ -1,24 +1,9 @@
-// Serviço de Missões com Firebase Firestore
-const {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-    orderBy,
-    serverTimestamp,
-    writeBatch
-} = require('firebase/firestore');
+// Serviço de Missões com Firebase Admin SDK
 const { db } = require('../config/firebase');
 
 class MissionService {
     constructor() {
         this.collectionName = 'missions';
-        this.missionsRef = collection(db, this.collectionName);
     }
 
     /**
@@ -28,18 +13,18 @@ class MissionService {
      */
     async createMission(missionData) {
         try {
-            const missionDoc = doc(this.missionsRef);
+            const missionDoc = db.collection(this.collectionName).doc();
             const missionId = missionDoc.id;
 
             const newMission = {
                 ...missionData,
                 id: missionId,
                 status: missionData.status || 'ativa',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
 
-            await setDoc(missionDoc, newMission);
+            await missionDoc.set(newMission);
             console.log(`✅ Missão criada: ${missionData.titulo} (${missionId})`);
 
             return { ...newMission, id: missionId };
@@ -56,10 +41,10 @@ class MissionService {
      */
     async getMissionById(missionId) {
         try {
-            const missionDoc = doc(db, this.collectionName, missionId);
-            const missionSnap = await getDoc(missionDoc);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
+            const missionSnap = await missionDoc.get();
 
-            if (missionSnap.exists()) {
+            if (missionSnap.exists) {
                 return { id: missionSnap.id, ...missionSnap.data() };
             }
             return null;
@@ -76,32 +61,32 @@ class MissionService {
      */
     async getAllMissions(filters = {}) {
         try {
-            let q = this.missionsRef;
+            let query = db.collection(this.collectionName);
 
             // Aplicar filtros
             if (filters.masterId) {
-                q = query(q, where('masterId', '==', filters.masterId));
+                query = query.where('masterId', '==', filters.masterId);
             }
             if (filters.masterUsername) {
-                q = query(q, where('masterUsername', '==', filters.masterUsername));
+                query = query.where('masterUsername', '==', filters.masterUsername);
             }
             if (filters.masterArea) {
-                q = query(q, where('masterArea', '==', filters.masterArea));
+                query = query.where('masterArea', '==', filters.masterArea);
             }
             if (filters.status) {
-                q = query(q, where('status', '==', filters.status));
+                query = query.where('status', '==', filters.status);
             }
             if (filters.turma) {
-                q = query(q, where('turma', '==', filters.turma));
+                query = query.where('turma', '==', filters.turma);
             }
             if (filters.targetClass) {
-                q = query(q, where('targetClass', '==', filters.targetClass));
+                query = query.where('targetClass', '==', filters.targetClass);
             }
 
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
             const missions = [];
 
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 missions.push({ id: doc.id, ...doc.data() });
             });
 
@@ -138,10 +123,10 @@ class MissionService {
                 where('status', '==', 'ativa')
             );
 
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
             const missions = [];
 
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 const mission = { id: doc.id, ...doc.data() };
 
                 // Filtrar por turma e classe
@@ -171,14 +156,14 @@ class MissionService {
      */
     async updateMission(missionId, updates) {
         try {
-            const missionDoc = doc(db, this.collectionName, missionId);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
 
             const updateData = {
                 ...updates,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
-            await updateDoc(missionDoc, updateData);
+            await missionDoc.update(updateData);
             console.log(`✅ Missão atualizada: ${missionId}`);
 
             return await this.getMissionById(missionId);
@@ -195,8 +180,8 @@ class MissionService {
      */
     async deleteMission(missionId) {
         try {
-            const missionDoc = doc(db, this.collectionName, missionId);
-            await deleteDoc(missionDoc);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
+            await missionDoc.delete();
             console.log(`✅ Missão deletada: ${missionId}`);
             return true;
         } catch (error) {
@@ -236,12 +221,12 @@ class MissionService {
 
             for (const mission of missionsArray) {
                 try {
-                    const missionDoc = doc(this.missionsRef);
+                    const missionDoc = db.collection(this.collectionName).doc();
                     const missionData = {
                         ...mission,
                         id: mission.id || missionDoc.id,
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp()
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     };
 
                     batch.set(missionDoc, missionData);
@@ -269,17 +254,17 @@ class MissionService {
      */
     async updateMission(missionId, missionData) {
         try {
-            const missionDoc = doc(db, this.collectionName, missionId);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
 
             // Remover campos que não devem ser atualizados
             const { id, createdAt, ...updateData } = missionData;
 
             const dataToUpdate = {
                 ...updateData,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
-            await updateDoc(missionDoc, dataToUpdate);
+            await missionDoc.update(dataToUpdate);
             console.log(`✅ Missão atualizada: ${missionId}`);
 
             return { ...missionData, id: missionId };
@@ -300,15 +285,15 @@ class MissionService {
         try {
             console.log(`🔄 Atualizando status da missão ${missionId} para aluno ${userId}: ${newStatus}`);
 
-            const missionDoc = doc(db, this.collectionName, missionId);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
 
             // Manter o histórico de status
             const dataToUpdate = {
                 [`userStatus.${userId}`]: newStatus,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
-            await updateDoc(missionDoc, dataToUpdate);
+            await missionDoc.update(dataToUpdate);
             console.log(`✅ Status da missão atualizado para: ${newStatus}`);
 
             return { missionId, userId, status: newStatus };
@@ -325,8 +310,8 @@ class MissionService {
      */
     async deleteMission(missionId) {
         try {
-            const missionDoc = doc(db, this.collectionName, missionId);
-            await deleteDoc(missionDoc);
+            const missionDoc = db.collection(this.collectionName).doc(missionId);
+            await missionDoc.delete();
             console.log(`✅ Missão excluída: ${missionId}`);
             return true;
         } catch (error) {

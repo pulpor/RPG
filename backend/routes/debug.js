@@ -12,9 +12,8 @@ router.get('/test-firebase', async (req, res) => {
             });
         }
 
-        const { collection, getDocs } = require('firebase/firestore');
-        const usersRef = collection(db, 'users');
-        const snapshot = await getDocs(usersRef);
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.get();
         
         res.json({
             status: 'ok',

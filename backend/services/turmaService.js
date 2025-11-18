@@ -1,29 +1,11 @@
-// Serviço de Turmas com Firebase Firestore
-const {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-    serverTimestamp,
-    writeBatch,
-    arrayUnion,
-    arrayRemove
-} = require('firebase/firestore');
+// Serviço de Turmas com Firebase Admin SDK
 const { db } = require('../config/firebase');
 
 class TurmaService {
     constructor() {
         this.collectionName = 'turmas';
-        this.turmasRef = collection(db, this.collectionName);
-
         // Coleção de relacionamentos aluno-turma
         this.alunosTurmasCollection = 'alunos-turmas';
-        this.alunosTurmasRef = collection(db, this.alunosTurmasCollection);
     }
 
     /**
@@ -33,7 +15,7 @@ class TurmaService {
      */
     async createTurma(turmaData) {
         try {
-            const turmaDoc = doc(this.turmasRef);
+            const turmaDoc = db.collection(this.collectionName).doc();
             const turmaId = turmaDoc.id;
 
             const newTurma = {
@@ -41,11 +23,11 @@ class TurmaService {
                 id: turmaId,
                 students: turmaData.students || [],
                 active: turmaData.active ?? true,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
 
-            await setDoc(turmaDoc, newTurma);
+            await turmaDoc.set(newTurma);
 
             // Criar relacionamentos aluno-turma
             if (newTurma.students.length > 0) {
@@ -67,10 +49,10 @@ class TurmaService {
      */
     async getTurmaById(turmaId) {
         try {
-            const turmaDoc = doc(db, this.collectionName, turmaId);
-            const turmaSnap = await getDoc(turmaDoc);
+            const turmaDoc = db.collection(this.collectionName).doc(turmaId);
+            const turmaSnap = await turmaDoc.get();
 
-            if (turmaSnap.exists()) {
+            if (turmaSnap.exists) {
                 return { id: turmaSnap.id, ...turmaSnap.data() };
             }
             return null;
@@ -87,20 +69,20 @@ class TurmaService {
      */
     async getAllTurmas(filters = {}) {
         try {
-            let q = this.turmasRef;
+            let query = db.collection(this.collectionName);
 
             // Aplicar filtros
             if (filters.masterUsername) {
-                q = query(q, where('masterUsername', '==', filters.masterUsername));
+                query = query.where('masterUsername', '==', filters.masterUsername);
             }
             if (filters.active !== undefined) {
-                q = query(q, where('active', '==', filters.active));
+                query = query.where('active', '==', filters.active);
             }
 
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
             const turmas = [];
 
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 turmas.push({ id: doc.id, ...doc.data() });
             });
 
@@ -130,10 +112,10 @@ class TurmaService {
         try {
             // Buscar relacionamentos do aluno
             const q = query(this.alunosTurmasRef, where('userId', '==', userId));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
 
             const turmaIds = [];
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 turmaIds.push(doc.data().turmaId);
             });
 
@@ -162,11 +144,11 @@ class TurmaService {
      */
     async updateTurma(turmaId, updates) {
         try {
-            const turmaDoc = doc(db, this.collectionName, turmaId);
+            const turmaDoc = db.collection(this.collectionName).doc(turmaId);
 
             const updateData = {
                 ...updates,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
             // Se os alunos mudaram, sincronizar relacionamentos
@@ -177,7 +159,7 @@ class TurmaService {
                 }
             }
 
-            await updateDoc(turmaDoc, updateData);
+            await turmaDoc.update(updateData);
             console.log(`✅ Turma atualizada: ${turmaId}`);
 
             return await this.getTurmaById(turmaId);
@@ -195,7 +177,7 @@ class TurmaService {
      */
     async addStudentToTurma(turmaId, userId) {
         try {
-            const turmaDoc = doc(db, this.collectionName, turmaId);
+            const turmaDoc = db.collection(this.collectionName).doc(turmaId);
             const turma = await this.getTurmaById(turmaId);
 
             if (!turma) {
@@ -203,9 +185,9 @@ class TurmaService {
             }
 
             // Adicionar aluno ao array
-            await updateDoc(turmaDoc, {
+            await turmaDoc.update({
                 students: arrayUnion(userId),
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             });
 
             // Criar relacionamento aluno-turma
@@ -227,12 +209,12 @@ class TurmaService {
      */
     async removeStudentFromTurma(turmaId, userId) {
         try {
-            const turmaDoc = doc(db, this.collectionName, turmaId);
+            const turmaDoc = db.collection(this.collectionName).doc(turmaId);
 
             // Remover aluno do array
-            await updateDoc(turmaDoc, {
+            await turmaDoc.update({
                 students: arrayRemove(userId),
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             });
 
             // Deletar relacionamento aluno-turma
@@ -278,8 +260,8 @@ class TurmaService {
                 await this.deleteAllAlunoTurmaRelations(turmaId);
             }
 
-            const turmaDoc = doc(db, this.collectionName, turmaId);
-            await deleteDoc(turmaDoc);
+            const turmaDoc = db.collection(this.collectionName).doc(turmaId);
+            await turmaDoc.delete();
             console.log(`✅ Turma deletada: ${turmaId}`);
             return true;
         } catch (error) {
@@ -301,11 +283,11 @@ class TurmaService {
             const relationId = `${userId}_${turmaId}`;
             const relationDoc = doc(db, this.alunosTurmasCollection, relationId);
 
-            await setDoc(relationDoc, {
+            await relationDoc.set({
                 userId,
                 turmaId,
                 masterUsername,
-                createdAt: serverTimestamp()
+                createdAt: new Date().toISOString()
             });
 
             console.log(`✅ Relacionamento criado: ${relationId}`);
@@ -324,7 +306,7 @@ class TurmaService {
         try {
             const relationId = `${userId}_${turmaId}`;
             const relationDoc = doc(db, this.alunosTurmasCollection, relationId);
-            await deleteDoc(relationDoc);
+            await relationDoc.delete();
             console.log(`✅ Relacionamento deletado: ${relationId}`);
         } catch (error) {
             console.error('❌ Erro ao deletar relacionamento:', error);
@@ -339,10 +321,10 @@ class TurmaService {
     async deleteAllAlunoTurmaRelations(turmaId) {
         try {
             const q = query(this.alunosTurmasRef, where('turmaId', '==', turmaId));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
 
             const batch = writeBatch(db);
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 batch.delete(doc.ref);
             });
 
@@ -364,10 +346,10 @@ class TurmaService {
         try {
             // Buscar relacionamentos existentes
             const q = query(this.alunosTurmasRef, where('turmaId', '==', turmaId));
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
 
             const existingRelations = new Set();
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 existingRelations.add(doc.data().userId);
             });
 
@@ -405,16 +387,16 @@ class TurmaService {
 
             for (const turma of turmasArray) {
                 try {
-                    const turmaDoc = doc(this.turmasRef);
+                    const turmaDoc = db.collection(this.collectionName).doc();
 
                     const turmaData = {
                         ...turma,
                         id: turma.id || turmaDoc.id,
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp()
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     };
 
-                    await setDoc(turmaDoc, turmaData);
+                    await turmaDoc.set(turmaData);
 
                     // Criar relacionamentos
                     if (turma.students && turma.students.length > 0) {

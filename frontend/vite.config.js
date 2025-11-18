@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: './',
-  base: '/RPG/', // GitHub Pages base path (raiz do projeto)
+  base: '/', // Usar raiz para desenvolvimento, /RPG/ apenas no build
   build: {
     outDir: '../docs', // Build direto para docs (GitHub Pages)
     emptyOutDir: true, // Limpar pasta antes do build

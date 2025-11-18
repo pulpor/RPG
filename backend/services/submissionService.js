@@ -1,29 +1,9 @@
-// Serviço de Submissões com Firebase Firestore + Storage
-const {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-    serverTimestamp,
-    writeBatch
-} = require('firebase/firestore');
-const {
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject
-} = require('firebase/storage');
+// Serviço de Submissões com Firebase Admin SDK
 const { db, storage } = require('../config/firebase');
 
 class SubmissionService {
     constructor() {
         this.collectionName = 'submissions';
-        this.submissionsRef = collection(db, this.collectionName);
     }
 
     /**
@@ -34,7 +14,7 @@ class SubmissionService {
      */
     async createSubmission(submissionData, files = []) {
         try {
-            const submissionDoc = doc(this.submissionsRef);
+            const submissionDoc = db.collection(this.collectionName).doc();
             const submissionId = submissionDoc.id;
 
             // Upload de arquivos para Firebase Storage (se houver)
@@ -53,12 +33,12 @@ class SubmissionService {
                 fileUrls,
                 status: submissionData.status || 'pending',
                 pending: submissionData.pending ?? true,
-                submittedAt: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                submittedAt: new Date().toISOString(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
 
-            await setDoc(submissionDoc, newSubmission);
+            await submissionDoc.set(newSubmission);
             console.log(`✅ Submissão criada: ${submissionId}`);
 
             return { ...newSubmission, id: submissionId };
@@ -75,7 +55,7 @@ class SubmissionService {
      */
     async createSubmissionLocal(submissionData) {
         try {
-            const submissionDoc = doc(this.submissionsRef);
+            const submissionDoc = db.collection(this.collectionName).doc();
             const submissionId = submissionDoc.id;
 
             const newSubmission = {
@@ -83,12 +63,12 @@ class SubmissionService {
                 id: submissionId,
                 status: submissionData.status || 'pending',
                 pending: submissionData.pending ?? true,
-                submittedAt: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                submittedAt: new Date().toISOString(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
 
-            await setDoc(submissionDoc, newSubmission);
+            await submissionDoc.set(newSubmission);
             console.log(`✅ Submissão local criada: ${submissionId}`);
 
             return { ...newSubmission, id: submissionId };
@@ -202,10 +182,10 @@ class SubmissionService {
      */
     async getSubmissionById(submissionId) {
         try {
-            const submissionDoc = doc(db, this.collectionName, submissionId);
-            const submissionSnap = await getDoc(submissionDoc);
+            const submissionDoc = db.collection(this.collectionName).doc(submissionId);
+            const submissionSnap = await submissionDoc.get();
 
-            if (submissionSnap.exists()) {
+            if (submissionSnap.exists) {
                 const data = submissionSnap.data();
 
                 // Converter Timestamps do Firestore para ISO strings
@@ -235,30 +215,30 @@ class SubmissionService {
      */
     async getAllSubmissions(filters = {}) {
         try {
-            let q = this.submissionsRef;
+            let query = db.collection(this.collectionName);
 
             // Aplicar filtros
             if (filters.userId) {
-                q = query(q, where('userId', '==', filters.userId));
+                query = query.where('userId', '==', filters.userId);
             }
             if (filters.missionId) {
-                q = query(q, where('missionId', '==', filters.missionId));
+                query = query.where('missionId', '==', filters.missionId);
             }
             if (filters.status) {
-                q = query(q, where('status', '==', filters.status));
+                query = query.where('status', '==', filters.status);
             }
             if (filters.pending !== undefined) {
-                q = query(q, where('pending', '==', filters.pending));
+                query = query.where('pending', '==', filters.pending);
             }
             // NOVO: Filtro por masterUsername
             if (filters.masterUsername) {
-                q = query(q, where('masterUsername', '==', filters.masterUsername));
+                query = query.where('masterUsername', '==', filters.masterUsername);
             }
 
-            const querySnapshot = await getDocs(q);
+            const snapshot = await query.get();
             const submissions = [];
 
-            querySnapshot.forEach((doc) => {
+            snapshot.forEach((doc) => {
                 const data = doc.data();
 
                 // Converter Timestamps do Firestore para ISO strings
@@ -318,11 +298,11 @@ class SubmissionService {
     async updateSubmission(submissionId, updates) {
         try {
             console.log(`[SUBMISSION SERVICE] Atualizando submissão ${submissionId} com:`, updates);
-            const submissionDoc = doc(db, this.collectionName, submissionId);
+            const submissionDoc = db.collection(this.collectionName).doc(submissionId);
 
             const updateData = {
                 ...updates,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
             // Remover campos undefined (Firestore não aceita undefined)
@@ -334,11 +314,11 @@ class SubmissionService {
 
             // Se mudou o status, adicionar timestamp de revisão
             if (updates.status && updates.status !== 'pending') {
-                updateData.reviewedAt = serverTimestamp();
+                updateData.reviewedAt = new Date().toISOString();
             }
 
             console.log(`[SUBMISSION SERVICE] Dados a serem salvos:`, updateData);
-            await updateDoc(submissionDoc, updateData);
+            await submissionDoc.update(updateData);
             console.log(`✅ Submissão atualizada: ${submissionId}`);
 
             return await this.getSubmissionById(submissionId);
@@ -412,8 +392,8 @@ class SubmissionService {
             }
 
             // Deletar documento do Firestore
-            const submissionDoc = doc(db, this.collectionName, submissionId);
-            await deleteDoc(submissionDoc);
+            const submissionDoc = db.collection(this.collectionName).doc(submissionId);
+            await submissionDoc.delete();
             console.log(`✅ Submissão deletada: ${submissionId}`);
             return true;
         } catch (error) {
@@ -434,7 +414,7 @@ class SubmissionService {
 
             for (const submission of submissionsArray) {
                 try {
-                    const submissionDoc = doc(this.submissionsRef);
+                    const submissionDoc = db.collection(this.collectionName).doc();
 
                     // Referências para arquivos locais (sem upload para Storage)
                     const fileUrls = [];
@@ -460,11 +440,11 @@ class SubmissionService {
                         ...submission,
                         id: submission.id || submissionDoc.id,
                         fileUrls,
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp()
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     };
 
-                    await setDoc(submissionDoc, submissionData);
+                    await submissionDoc.set(submissionData);
                     results.success++;
                 } catch (error) {
                     console.error(`❌ Erro ao migrar submissão ${submission.id}:`, error.message);
