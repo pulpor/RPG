@@ -1,0 +1,10 @@
+# Ignorar arquivos desnecessários no deploy
+frontend/
+docs/
+test/
+*.md
+.git/
+.gitignore
+.env
+backend/.env
+node_modules/
