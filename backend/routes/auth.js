@@ -161,14 +161,18 @@ router.get('/users', (req, res) => {
 // Rota de esqueci minha senha
 router.post('/forgot-password', async (req, res) => {
   try {
+    console.log('[FORGOT-PASSWORD] Iniciando processamento...');
     const { email } = req.body;
+    console.log('[FORGOT-PASSWORD] Email recebido:', email);
 
     if (!email) {
       return res.status(400).json({ error: 'Email é obrigatório' });
     }
 
+    console.log('[FORGOT-PASSWORD] Buscando usuário por email...');
     // Buscar usuário por email (assumindo que o campo email existe no Firestore)
     const user = await userService.getUserByEmail(email);
+    console.log('[FORGOT-PASSWORD] Usuário encontrado:', user ? 'SIM' : 'NÃO');
 
     if (!user) {
       // Por segurança, sempre retornar sucesso mesmo se o email não existir

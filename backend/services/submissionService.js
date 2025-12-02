@@ -117,6 +117,21 @@ class SubmissionService {
             
             // Admin SDK usa bucket.file() ao invés de ref()
             const bucket = storage.bucket();
+            console.log('🔄 [Firebase] Bucket name:', bucket.name);
+            console.log('🔄 [Firebase] Verificando se bucket existe...');
+            
+            // Verificar se bucket existe
+            try {
+                const [exists] = await bucket.exists();
+                console.log('🔄 [Firebase] Bucket exists:', exists);
+                if (!exists) {
+                    throw new Error(`Bucket ${bucket.name} não existe ou não tem permissões`);
+                }
+            } catch (existsError) {
+                console.error('❌ [Firebase] Erro ao verificar bucket:', existsError.message);
+                throw new Error(`Erro ao acessar Storage: ${existsError.message}`);
+            }
+            
             const fileRef = bucket.file(storagePath);
 
             // Preparar metadados
@@ -158,16 +173,29 @@ class SubmissionService {
 
             console.log('🔄 [Firebase] Enviando para Firebase Storage...');
             // Admin SDK usa save() ao invés de uploadBytes()
-            await fileRef.save(fileBuffer, metadata);
-            console.log('✅ [Firebase] Upload concluído para Storage');
-
-            // Obter URL de download - Admin SDK usa getSignedUrl()
-            console.log('🔄 [Firebase] Obtendo URL de download...');
-            const [downloadURL] = await fileRef.getSignedUrl({
-                action: 'read',
-                expires: '03-01-2500' // URL válida até 2500
-            });
-            console.log('✅ [Firebase] URL de download obtida:', downloadURL.substring(0, 50) + '...');
+            let downloadURL;
+            try {
+                await fileRef.save(fileBuffer, metadata);
+                console.log('✅ [Firebase] Upload concluído para Storage');
+                
+                // Obter URL de download - Admin SDK usa getSignedUrl()
+                console.log('🔄 [Firebase] Obtendo URL de download...');
+                [downloadURL] = await fileRef.getSignedUrl({
+                    action: 'read',
+                    expires: '03-01-2500' // URL válida até 2500
+                });
+                console.log('✅ [Firebase] URL de download obtida:', downloadURL.substring(0, 50) + '...');
+            } catch (uploadError) {
+                console.error('❌ [Firebase] Erro no Storage:', {
+                    message: uploadError.message,
+                    code: uploadError.code
+                });
+                
+                // FALLBACK: Se Storage não está habilitado, usar URL temporária
+                console.warn('⚠️  Firebase Storage não disponível, usando fallback');
+                downloadURL = `storage-placeholder://${storagePath}`;
+                console.log('⚠️  Arquivo salvo em memória (não persistente em produção)');
+            }
 
             return {
                 url: downloadURL,

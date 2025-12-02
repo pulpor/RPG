@@ -121,14 +121,12 @@ class UserService {
      */
     async updateUser(userId, updates) {
         try {
-            const userDoc = doc(db, this.collectionName, userId);
-
             const updateData = {
                 ...updates,
-                updatedAt: serverTimestamp()
+                updatedAt: new Date().toISOString()
             };
 
-            await updateDoc(userDoc, updateData);
+            await db.collection(this.collectionName).doc(userId).update(updateData);
             console.log(`✅ Usuário atualizado: ${userId}`);
 
             return await this.getUserById(userId);
@@ -145,8 +143,7 @@ class UserService {
      */
     async deleteUser(userId) {
         try {
-            const userDoc = doc(db, this.collectionName, userId);
-            await deleteDoc(userDoc);
+            await db.collection(this.collectionName).doc(userId).delete();
             console.log(`✅ Usuário deletado: ${userId}`);
             return true;
         } catch (error) {
@@ -244,8 +241,10 @@ class UserService {
      */
     async getUserByEmail(email) {
         try {
-            const q = query(this.usersRef, where('email', '==', email));
-            const snapshot = await query.get();
+            const snapshot = await db.collection(this.collectionName)
+                .where('email', '==', email)
+                .limit(1)
+                .get();
 
             if (!snapshot.empty) {
                 const userDoc = snapshot.docs[0];
