@@ -101,7 +101,8 @@ const Toast = {
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/';
+        const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+        window.location.href = `${basePath}/`;
         throw new Error('Token não encontrado');
     }
 
@@ -120,7 +121,8 @@ async function apiRequest(endpoint, options = {}) {
         if (!response.ok) {
             if (response.status === 401) {
                 localStorage.removeItem('token');
-                window.location.href = '/';
+                const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+                window.location.href = `${basePath}/`;
                 throw new Error('Sessão expirada. Por favor, faça login novamente.');
             }
             const errorText = await response.text();
@@ -301,7 +303,8 @@ async function loadAndUpdateSubmissions() {
 function validateAuthentication() {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/';
+        const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+        window.location.href = `${basePath}/`;
         return false;
     }
     return true;
