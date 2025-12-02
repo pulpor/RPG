@@ -114,12 +114,15 @@ class SubmissionService {
             // Criar caminho no Storage: submissions/{masterUsername}/{userId}/{submissionId}/{filename}
             const storagePath = `submissions/${submissionData.masterUsername}/${userId}/${submissionId}/${sanitizedFileName}`;
             console.log('🔄 [Firebase] Caminho no Storage:', storagePath);
-            const storageRef = ref(storage, storagePath);
+            
+            // Admin SDK usa bucket.file() ao invés de ref()
+            const bucket = storage.bucket();
+            const fileRef = bucket.file(storagePath);
 
             // Preparar metadados
             const metadata = {
                 contentType: file.mimetype || 'application/octet-stream',
-                customMetadata: {
+                metadata: {
                     userId,
                     username: username || 'desconhecido',
                     masterUsername: submissionData.masterUsername,
@@ -154,12 +157,16 @@ class SubmissionService {
             }
 
             console.log('🔄 [Firebase] Enviando para Firebase Storage...');
-            await uploadBytes(storageRef, fileBuffer, metadata);
+            // Admin SDK usa save() ao invés de uploadBytes()
+            await fileRef.save(fileBuffer, metadata);
             console.log('✅ [Firebase] Upload concluído para Storage');
 
-            // Obter URL de download
+            // Obter URL de download - Admin SDK usa getSignedUrl()
             console.log('🔄 [Firebase] Obtendo URL de download...');
-            const downloadURL = await getDownloadURL(storageRef);
+            const [downloadURL] = await fileRef.getSignedUrl({
+                action: 'read',
+                expires: '03-01-2500' // URL válida até 2500
+            });
             console.log('✅ [Firebase] URL de download obtida:', downloadURL.substring(0, 50) + '...');
 
             return {
