@@ -35,7 +35,8 @@ export function validateAuthentication() {
     if (!token || isMaster !== 'true' || !isTokenValid()) {
         showError('Acesso negado. Faça login como Mestre.');
         setTimeout(() => {
-            window.location.href = '/';
+            const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+            window.location.href = `${basePath}/`;
         }, 2000);
         return false;
     }
@@ -105,10 +106,11 @@ export async function login() {
             else alert('Login realizado com sucesso!');
 
             // Redirecionar baseado no tipo de usuário
+            const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
             if (data.user.isMaster) {
-                window.location.href = '/src/pages/master.html';
+                window.location.href = `${basePath}/src/pages/master.html`;
             } else {
-                window.location.href = '/src/pages/student.html';
+                window.location.href = `${basePath}/src/pages/student.html`;
             }
         } else {
             if (window.showError) showError('Login falhou: ' + data.error);
@@ -125,7 +127,8 @@ export function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('isMaster');
-    window.location.href = '/';
+    const basePath = window.location.hostname.includes('github.io') ? '/RPG' : '';
+    window.location.href = `${basePath}/`;
 }
 
 export function showRegisterForm() {
