@@ -9,6 +9,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         login: './index.html',
+        cadastro: './cadastro.html',
+        resetPassword: './reset-password.html',
         master: './src/pages/master.html',
         student: './src/pages/student.html',
       },
