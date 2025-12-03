@@ -20,12 +20,9 @@ const debugRotas = require('./routes/debug');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Log rápido para validar a presença da chave em runtime
-console.log('[ENV] GEMINI_API_KEY presente:', process.env.GEMINI_API_KEY ? 'SIM' : 'NÃO');
-
 // CORS deve vir PRIMEIRO antes de qualquer outra coisa
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     const allowedOrigins = [
       'http://127.0.0.1:5500',
       'http://localhost:3000',
@@ -35,15 +32,14 @@ app.use(cors({
       'https://pulpor.github.io',
       'https://rpg-azure.vercel.app'
     ];
-    
+
     // Permitir requisições sem origin (mobile apps, postman, etc)
     if (!origin) return callback(null, true);
-    
+
     // Verificar se origin está na lista OU termina com vercel.app
     if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || origin.includes('github.io')) {
       callback(null, true);
     } else {
-      console.log('❌ Origin bloqueada:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -63,12 +59,12 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  
+
   // Responder imediatamente para OPTIONS
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
-  
+
   next();
 });
 
@@ -76,31 +72,10 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// NÃO usar multer global - cada rota usa seu próprio middleware
-
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {
   console.error('Erro no servidor:', err);
   res.status(500).json({ error: 'Erro interno do servidor', details: err.message });
-});
-
-// Middleware de logs
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-
-  // Log especial para requisições do Gemini
-  if (req.url.includes('/gemini')) {
-    console.log('🤖 [GEMINI] Requisição detectada!');
-    console.log('   - Method:', req.method);
-    console.log('   - URL:', req.url);
-    console.log('   - Headers:', JSON.stringify(req.headers, null, 2));
-  }
-
-  // Log extra para login
-  if (req.method === "POST" && req.url === "/auth/login") {
-    console.log("[LOGIN DEBUG] Body recebido:", req.body);
-  }
-  next();
 });
 
 // Health check endpoint (sem autenticação)
@@ -115,7 +90,6 @@ app.get('/health', (req, res) => {
 });
 
 // Configurar rotas
-console.log('[SERVER] Configurando rotas...');
 app.use('/auth', autenticacaoRotas);
 app.use('/missoes', missoesRotas);
 app.use('/usuarios', usuariosRotas);
@@ -126,7 +100,6 @@ app.use('/api', bugReportEmailRotas);
 app.use('/debug', debugRotas);
 app.use('/files', require('./routes/files'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-console.log('[SERVER] ✅ Rotas configuradas');
 
 // Servir arquivos estáticos do frontend
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
@@ -138,9 +111,6 @@ app.get('/', (req, res) => {
 
 app.post('/api/register', (req, res) => {
   // Receba os dados, salve em uma lista de pendentes, não em users.json
-  // Exemplo:
-  // pendingUsers.push({ ...req.body });
-  // res.json({ success: true });
 });
 
 // Middleware para rotas não encontradas (404) - sempre retorna JSON
@@ -160,17 +130,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Iniciar servidor apenas em ambiente standalone (não serverless)
 if (require.main === module) {
   const server = app.listen(port, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${port}`);
-    console.log('📋 Rotas disponíveis:');
-    console.log('   - POST /auth/login');
-    console.log('   - POST /auth/register');
-    console.log('   - GET  /missoes (requer autenticação)');
-    console.log('   - POST /missoes (requer autenticação de mestre)');
-    console.log('   - GET  /usuarios/me (requer autenticação)');
-    console.log('   - GET  /submissoes/my-submissions (requer autenticação)');
-    console.log('✅ Sistema pronto para uso!');
-    console.log('🔥 Firebase Firestore: Conectado');
-    console.log('🤖 Gemini 2.5-Flash: Configurado');
+    // Server started
   });
 
   // Aumentar timeout para upload de arquivos (60 segundos)

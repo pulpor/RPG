@@ -22,7 +22,4 @@ window.isDev = isDev;
 window.isProd = isProd;
 
 // Debug - Build v2.0
-console.log('🔧 Modo:', isProd ? 'PRODUCTION' : 'DEVELOPMENT');
-console.log('🌐 API URL:', API_URL);
-console.log('🌍 Hostname:', window.location.hostname);
-console.log('📦 Build:', '2.0');
+

@@ -23,7 +23,7 @@ export class GeminiAPI {
 
             return response;
         } catch (error) {
-            console.error('Erro ao analisar submissão com Gemini:', error);
+
             return {
                 success: false,
                 error: error.message,
@@ -61,7 +61,7 @@ export class GeminiAPI {
                     });
                 }
             } catch (error) {
-                console.warn(`Erro ao ler arquivo ${file.name}:`, error);
+
                 filesContent.push({
                     name: file.name,
                     type: file.type || this.getFileType(file.name),
@@ -111,10 +111,7 @@ export class GeminiAPI {
     async callBackendAPI(filesContent, missionContext) {
         const token = localStorage.getItem('token');
 
-        console.log('\n📞 [FRONTEND] Chamando API do Gemini...');
-        console.log('   - Arquivos:', filesContent.length);
-        console.log('   - Missão:', missionContext.title || 'N/A');
-        console.log('   - URL:', `${this.baseUrl}/analyze`);
+
 
         try {
             const response = await fetch(`${this.baseUrl}/analyze`, {
@@ -132,17 +129,12 @@ export class GeminiAPI {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
 
-                console.log('\n⚠️ [FRONTEND] Backend retornou erro:');
-                console.log('   - Status:', response.status);
-                console.log('   - Error:', errorData.error);
-                console.log('   - useFallback:', errorData.useFallback);
-                console.log('   - Message:', errorData.message);
+
 
                 // Se a API Key não está configurada (503) ou backend não disponível (404/500), usar fallback
                 if (errorData.useFallback || errorData.error === 'API_KEY_NOT_CONFIGURED' ||
                     response.status === 404 || response.status === 500 || response.status === 503) {
-                    console.warn('⚠️ [FALLBACK ATIVADO] Motivo:', errorData.error || `Status ${response.status}`);
-                    console.warn('   ➡️ Usando feedback de demonstração');
+
                     return this.generateFallbackFeedback(filesContent, missionContext);
                 }
 
@@ -150,17 +142,13 @@ export class GeminiAPI {
             }
 
             const result = await response.json();
-            console.log('\n✅ [FRONTEND] Resposta bem-sucedida do Gemini!');
-            console.log('   - Modelo:', result.model);
-            console.log('   - Feedback:', result.feedback ? `${result.feedback.length} chars` : 'vazio');
-            console.log('   - isDemoFeedback:', result.isDemoFeedback || false);
+
 
             return result;
         } catch (error) {
             // Se não conseguir conectar ao backend, usar fallback
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                console.error('\n❌ [FRONTEND] Erro de conexão com backend:', error.message);
-                console.warn('   ➡️ Usando feedback de demonstração (backend offline?)');
+
                 return this.generateFallbackFeedback(filesContent, missionContext);
             }
             throw error;
@@ -177,9 +165,7 @@ export class GeminiAPI {
         const mission = missionContext.title || 'Missão';
         const fileCount = filesContent.length;
 
-        console.log('\n🎭 [FALLBACK] Gerando feedback de demonstração...');
-        console.log('   - Missão:', mission);
-        console.log('   - Arquivos:', fileCount);
+
 
         return {
             success: true,

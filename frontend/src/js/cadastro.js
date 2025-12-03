@@ -30,7 +30,7 @@ export function setupCursoClasse() {
   const cursoSelect = document.getElementById('curso-select');
   const classSelect = document.getElementById('class-select');
   if (!cursoSelect || !classSelect) {
-    console.error('Elementos curso-select ou class-select não encontrados');
+
     return;
   }
   cursoSelect.addEventListener('change', function () {
@@ -197,7 +197,7 @@ passwordBarStyle.textContent = `
   }
 `;
 document.head.appendChild(passwordBarStyle);
-console.log('Estilos dinâmicos aplicados:', style.textContent, passwordBarStyle.textContent);
+
 
 // --- REGISTRO ---
 function validateUsername(username) {
@@ -206,7 +206,7 @@ function validateUsername(username) {
 
 function validateFullname(fullname) {
   const minLength = 3;
-  const validFormat = /^[A-Za-z\s]+$/.test(fullname);
+  const validFormat = /^[A-Za-z\u00C0-\u00FF\s]+$/.test(fullname);
   return fullname.length >= minLength && validFormat;
 }
 
@@ -229,7 +229,7 @@ function showUsernameFeedback() {
   const usernameInput = document.getElementById('reg-username');
   const feedback = document.getElementById('username-feedback');
   if (!usernameInput || !feedback) {
-    console.error('Elementos reg-username ou username-feedback não encontrados');
+
     return;
   }
   const username = usernameInput.value.trim();
@@ -254,7 +254,7 @@ function showFullnameFeedback() {
   const fullnameInput = document.getElementById('reg-fullname');
   const feedback = document.getElementById('fullname-feedback');
   if (!fullnameInput || !feedback) {
-    console.error('Elementos reg-fullname ou fullname-feedback não encontrados');
+
     return;
   }
   const fullname = fullnameInput.value.trim();
@@ -279,7 +279,7 @@ function showEmailFeedback() {
   const emailInput = document.getElementById('reg-email');
   const feedback = document.getElementById('email-feedback');
   if (!emailInput || !feedback) {
-    console.error('Elementos reg-email ou email-feedback não encontrados');
+
     return;
   }
   const email = emailInput.value.trim();
@@ -306,7 +306,7 @@ function showPasswordFeedback() {
   const strengthDiv = document.getElementById('password-strength');
   const strengthText = document.getElementById('password-strength-text');
   if (!passwordInput || !feedback || !strengthDiv || !strengthText) {
-    console.error('Elementos de senha não encontrados');
+
     return;
   }
   const bars = strengthDiv.querySelectorAll('.password-bar');
@@ -381,7 +381,7 @@ function validateRegisterFields() {
   const classe = document.getElementById('class-select')?.value;
 
   if (!username || !fullname || !email || !password || !curso || !classe) {
-    console.log('Campos obrigatórios não preenchidos:', { username, fullname, email, password, curso, classe });
+
     return false;
   }
 
@@ -390,14 +390,14 @@ function validateRegisterFields() {
   const emailValid = validateEmail(email);
   const passwordValid = Object.values(validatePassword(password)).every(Boolean);
 
-  console.log('Validações:', { usernameValid, fullnameValid, emailValid, passwordValid });
+
   return usernameValid && fullnameValid && emailValid && passwordValid;
 }
 
 function updateRegisterButtonState() {
   const btn = document.getElementById('registerSubmitButton');
   if (!btn) {
-    console.error('Botão registerSubmitButton não encontrado');
+
     return;
   }
   const isValid = validateRegisterFields();
@@ -431,7 +431,7 @@ async function handleRegister() {
   const classe = document.getElementById('class-select').value;
   const masterArea = getMasterForArea(curso);
 
-  console.log("[REGISTER FRONT] Dados enviados:", { username, fullname, email, password, curso, classe, masterArea });
+
 
   try {
     const res = await fetch(`${API_URL}/auth/register`, {
@@ -475,7 +475,7 @@ async function handleRegister() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOMContentLoaded: Inicializando validações');
+
   initializeEnhancedForms();
   showUsernameFeedback();
   showFullnameFeedback();
@@ -493,53 +493,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (usernameInput) {
     usernameInput.addEventListener('input', () => {
-      console.log('Input no username');
+
       showUsernameFeedback();
       updateRegisterButtonState();
     });
   } else {
-    console.error('Elemento reg-username não encontrado');
+
   }
 
   if (fullnameInput) {
     fullnameInput.addEventListener('input', () => {
-      console.log('Input no fullname');
+
       showFullnameFeedback();
       updateRegisterButtonState();
     });
   } else {
-    console.error('Elemento reg-fullname não encontrado');
+
   }
 
   if (emailInput) {
     emailInput.addEventListener('input', () => {
-      console.log('Input no email');
+
       showEmailFeedback();
       updateRegisterButtonState();
     });
   } else {
-    console.error('Elemento reg-email não encontrado');
+
   }
 
   if (passwordInput) {
     passwordInput.addEventListener('input', () => {
-      console.log('Input no password');
+
       showPasswordFeedback();
       updateRegisterButtonState();
     });
   } else {
-    console.error('Elemento reg-password não encontrado');
+
   }
 
   ['curso-select', 'class-select'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', () => {
-        console.log(`Change no ${id}`);
+
         updateRegisterButtonState();
       });
     } else {
-      console.error(`Elemento ${id} não encontrado`);
+
     }
   });
 
@@ -554,11 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (registerBtn) {
     registerBtn.addEventListener('click', function (e) {
       e.preventDefault();
-      console.log('Botão de cadastro clicado');
+
       handleRegister();
     });
   } else {
-    console.error('Botão registerSubmitButton não encontrado');
+
   }
 });
 

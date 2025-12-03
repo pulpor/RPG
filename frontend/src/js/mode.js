@@ -1,8 +1,8 @@
 export function applyThemeOnLoad() {
   const theme = localStorage.getItem("theme") || "light";
   document.documentElement.setAttribute("data-theme", theme);
-  console.log('[THEME] Tema carregado:', theme);
-  
+
+
   // Aguardar o DOM carregar completamente antes de atualizar o ícone
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -26,7 +26,7 @@ export function toggleTheme() {
 function updateThemeIcon(theme) {
   const icon = document.getElementById("theme-icon");
   if (!icon) {
-    console.error('[THEME] Ícone do tema não encontrado!');
+
     return;
   }
 
@@ -36,12 +36,12 @@ function updateThemeIcon(theme) {
     icon.classList.remove("fa-sun", "theme-icon-sun");
     icon.classList.add("fa-moon", "theme-icon-moon", "fas");
     if (tooltip) tooltip.textContent = "Nox";
-    console.log('[THEME] Ícone alterado para MOON (dark mode)');
+
   } else {
     icon.classList.remove("fa-moon", "theme-icon-moon");
     icon.classList.add("fa-sun", "theme-icon-sun", "fas");
     if (tooltip) tooltip.textContent = "Lumus";
-    console.log('[THEME] Ícone alterado para SUN (light mode)');
+
   }
 
   // Forçar display inline-block
